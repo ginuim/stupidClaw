@@ -2,7 +2,7 @@
 
 每次修改或开发代码后需更新本文件，勾选已完成项。
 
-当前开发分支：`phase-3-skills-history`
+当前开发分支：`phase-4-profile-memory`
 
 ## 全局硬约束（必须满足）
 
@@ -59,8 +59,12 @@
 
 ## 第 4 期：长期记忆 profile.md
 
-- [ ] `src/memory/profile-store.ts`
-- [ ] update_profile Skill
+- [x] `src/memory/profile-store.ts`
+- [x] update_profile Skill
+- [x] 第 4 期教程文章：`StupidClaw-第4期-用profile做长期记忆让Agent记住你.md`
+- [x] 优化身份提示词：设定模型身份为 StupidClaw，去掉“你是谁”硬编码分支
+- [x] 抽取身份提示词模块：`src/prompt/identity.ts`
+- [x] 修复回复重复：避免同时拼接 text_delta 与重复 text_end 内容
 - [ ] 验收：跨轮与重启后记忆保留
 
 ---

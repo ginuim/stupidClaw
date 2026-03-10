@@ -9,6 +9,8 @@ import {
   type AgentSession
 } from "@mariozechner/pi-coding-agent";
 import { appendHistoryEvent } from "./memory/history-store";
+import { readProfileMarkdown } from "./memory/profile-store";
+import { IDENTITY_PROMPT_LINES } from "./prompt/identity";
 import { createSkillRegistry } from "./skills/registry";
 
 export interface ChatInput {
@@ -161,6 +163,23 @@ function safeAppend(event: Parameters<typeof appendHistoryEvent>[0]): void {
   });
 }
 
+async function buildPromptWithProfile(text: string): Promise<string> {
+  const profile = await readProfileMarkdown();
+  return [
+    ...IDENTITY_PROMPT_LINES,
+    "",
+    "你正在和同一个用户持续对话。以下是长期记忆 profile.md，请优先遵守并引用其中稳定事实。",
+    "",
+    "<profile>",
+    profile.trim(),
+    "</profile>",
+    "",
+    "<user_message>",
+    text,
+    "</user_message>"
+  ].join("\n");
+}
+
 async function chatWithPi(chatId: string, text: string): Promise<string | null> {
   const chatSession = await getChatSession(chatId);
   if (!chatSession) {
@@ -168,12 +187,14 @@ async function chatWithPi(chatId: string, text: string): Promise<string | null> 
   }
 
   let replyBuffer = "";
+  let receivedDelta = false;
 
   const unsubscribe = chatSession.session.subscribe((event) => {
     if (
       event.type === "message_update" &&
       event.assistantMessageEvent.type === "text_delta"
     ) {
+      receivedDelta = true;
       replyBuffer += event.assistantMessageEvent.delta;
       return;
     }
@@ -181,7 +202,11 @@ async function chatWithPi(chatId: string, text: string): Promise<string | null> 
       event.type === "message_update" &&
       event.assistantMessageEvent.type === "text_end"
     ) {
-      replyBuffer += event.assistantMessageEvent.content;
+      // Some providers send full content in text_end even after deltas.
+      // If we already streamed deltas, appending text_end would duplicate output.
+      if (!receivedDelta) {
+        replyBuffer += event.assistantMessageEvent.content;
+      }
       return;
     }
     if (
@@ -223,7 +248,8 @@ async function chatWithPi(chatId: string, text: string): Promise<string | null> 
   });
 
   try {
-    await chatSession.session.prompt(text);
+    const promptWithProfile = await buildPromptWithProfile(text);
+    await chatSession.session.prompt(promptWithProfile);
   } finally {
     unsubscribe();
   }
