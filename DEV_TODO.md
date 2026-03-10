@@ -40,7 +40,7 @@
 - [x] `src/transport/index.ts`（polling | webhook 切换）
 - [x] `.env` 新增 `TELEGRAM_MODE`
 - [x] 第 2 期教程文章：`StupidClaw-第2期-从Polling升级到Webhook.md`
-- [ ] 验收：两种模式均正常
+- [ ] 验收：两种模式均正常（第二期先不做 webhook 公网验收，但 polling 已保持可用）
 
 ---
 
