@@ -52,10 +52,12 @@ type UpdateProfileInput = {
 src/
 ├─ memory/
 │  └─ profile-store.ts
+├─ prompt/
+│  └─ identity.ts
 ├─ skills/
 │  └─ memory/
 │     └─ update_profile.ts
-└─ engine.ts  (会话前注入 profile)
+└─ engine.ts  (会话前注入 profile + file skills)
 ```
 
 ---
@@ -84,10 +86,27 @@ src/
 并且只接受 `facts[] + mode`。  
 这比让模型直接写文件更稳：权限小，错误面就小。
 
-### 3) 引擎前置注入：每轮都带上 profile
+### 3) 引擎前置注入：身份 + profile + 文件技能
 
-在 `src/engine.ts` 里，每次 `prompt()` 前先读取 `profile.md`，再把它和当前用户消息拼成一个输入。  
-这样模型每轮都有同一份长期记忆，不依赖“刚好翻到历史记录”。
+`src/prompt/identity.ts` 把助手身份固定为 `StupidClaw`，避免回答身份问题时飘走。  
+在 `src/engine.ts` 里，每次 `prompt()` 前统一拼三块上下文：
+
+- 身份提示词（`IDENTITY_PROMPT_LINES`）
+- `profile.md` 长期记忆
+- `.stupidClaw/skills` 下所有 `SKILL.md`（格式化后注入 `<file_skills>`）
+
+这样“讲故事”“写日报”这类项目内技能，不需要走 tool-call，也能被模型直接遵循。
+
+### 4) 调试开关：先看见 prompt，再谈模型行为
+
+新增 `DEBUG_PROMPT=1` 后，每轮调用前会打印：
+
+- `[debug][prompt]`：完整 prompt（含 profile 与 file skills）
+- `[debug][tools]`：会话工具、custom tools、file skills 名单
+
+这能快速定位“skill 没触发”到底是：
+- 根本没加载进上下文；
+- 还是加载了，但模型没选用。
 
 ---
 
@@ -109,5 +128,6 @@ src/
 
 - [x] 存在 `.stupidClaw/profile.md`，且有固定 section
 - [x] `update_profile` 只能更新指定 section，不支持整文件自由覆盖
-- [x] 每轮对话前会注入 profile 内容
+- [x] 每轮对话前会注入身份提示、profile 和记忆型 file skills
+- [x] `DEBUG_PROMPT=1` 可打印 prompt/tools/fileSkills 调试信息
 - [ ] 实测：用户声明偏好后，下一轮与重启后均能正确记住

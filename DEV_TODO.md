@@ -65,6 +65,9 @@
 - [x] 优化身份提示词：设定模型身份为 StupidClaw，去掉“你是谁”硬编码分支
 - [x] 抽取身份提示词模块：`src/prompt/identity.ts`
 - [x] 修复回复重复：避免同时拼接 text_delta 与重复 text_end 内容
+- [x] 增加提示词调试开关：`DEBUG_PROMPT=1` 时打印每次模型调用 prompt
+- [x] 增加工具调试日志：打印会话可见工具名与自定义 skill 参数摘要
+- [x] 加载 `.stupidClaw/skills` 文件技能到每次模型提示词，并输出 fileSkills 调试列表
 - [ ] 验收：跨轮与重启后记忆保留
 
 ---

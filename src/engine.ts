@@ -4,6 +4,7 @@ import {
   AuthStorage,
   createCodingTools,
   createAgentSession,
+  formatSkillsForPrompt,
   ModelRegistry,
   SessionManager,
   type AgentSession
@@ -11,6 +12,7 @@ import {
 import { appendHistoryEvent } from "./memory/history-store";
 import { readProfileMarkdown } from "./memory/profile-store";
 import { IDENTITY_PROMPT_LINES } from "./prompt/identity";
+import { loadStandardFileSkills } from "./skills/file-skills";
 import { createSkillRegistry } from "./skills/registry";
 
 export interface ChatInput {
@@ -29,6 +31,7 @@ interface ChatSession {
 const chatSessions = new Map<string, ChatSession>();
 const skillRegistry = createSkillRegistry();
 const DEBUG_ENGINE = process.env.DEBUG_STUPIDCLAW === "1";
+const DEBUG_PROMPT = process.env.DEBUG_PROMPT === "1";
 const WORKSPACE_ROOT = path.resolve(process.cwd(), ".stupidClaw", "workspace");
 let startupConfigLogged = false;
 
@@ -36,6 +39,81 @@ function debugLog(message: string): void {
   if (DEBUG_ENGINE) {
     console.log(`[debug][engine] ${message}`);
   }
+}
+
+function debugPromptLog(chatId: string, prompt: string): void {
+  if (!DEBUG_PROMPT) {
+    return;
+  }
+  console.log("[debug][prompt] begin");
+  console.log(`chatId=${chatId}`);
+  console.log(prompt);
+  console.log("[debug][prompt] end");
+}
+
+function summarizeSchema(schema: unknown): string {
+  try {
+    const raw = JSON.stringify(schema);
+    if (!raw) {
+      return "(empty)";
+    }
+    return raw.length > 240 ? `${raw.slice(0, 240)}...` : raw;
+  } catch {
+    return "(unserializable)";
+  }
+}
+
+function collectSessionToolNames(session: AgentSession): string[] {
+  const names = new Set<string>();
+  const candidates: unknown[] = [
+    (session as unknown as { tools?: unknown }).tools,
+    (session as unknown as { agent?: { tools?: unknown } }).agent?.tools,
+    (session as unknown as { agent?: { state?: { tools?: unknown } } }).agent?.state?.tools
+  ];
+
+  for (const candidate of candidates) {
+    if (!candidate) {
+      continue;
+    }
+    if (Array.isArray(candidate)) {
+      for (const item of candidate) {
+        if (
+          item &&
+          typeof item === "object" &&
+          "name" in item &&
+          typeof (item as { name?: unknown }).name === "string"
+        ) {
+          names.add((item as { name: string }).name);
+        }
+      }
+      continue;
+    }
+    if (typeof candidate === "object") {
+      for (const key of Object.keys(candidate as Record<string, unknown>)) {
+        names.add(key);
+      }
+    }
+  }
+
+  return Array.from(names).sort();
+}
+
+function debugToolsLog(session: AgentSession, fileSkillNames: string[]): void {
+  if (!DEBUG_PROMPT) {
+    return;
+  }
+  const sessionToolNames = collectSessionToolNames(session);
+  const customToolSummary = skillRegistry.all.map((skill) => ({
+    name: skill.tool.name,
+    exposure: skill.exposure,
+    parameters: summarizeSchema(skill.tool.parameters)
+  }));
+
+  console.log("[debug][tools] begin");
+  console.log(`sessionTools=${JSON.stringify(sessionToolNames)}`);
+  console.log(`customTools=${JSON.stringify(customToolSummary)}`);
+  console.log(`fileSkills=${JSON.stringify(fileSkillNames)}`);
+  console.log("[debug][tools] end");
 }
 
 function maskSecret(value: string | undefined): string {
@@ -163,9 +241,16 @@ function safeAppend(event: Parameters<typeof appendHistoryEvent>[0]): void {
   });
 }
 
-async function buildPromptWithProfile(text: string): Promise<string> {
+async function buildPromptWithProfile(
+  text: string
+): Promise<{ prompt: string; fileSkillNames: string[] }> {
   const profile = await readProfileMarkdown();
-  return [
+  const fileSkills = loadStandardFileSkills();
+  const fileSkillNames = fileSkills.map((skill) => skill.name);
+  const fileSkillsPrompt =
+    fileSkills.length > 0 ? formatSkillsForPrompt(fileSkills) : "";
+
+  const lines = [
     ...IDENTITY_PROMPT_LINES,
     "",
     "你正在和同一个用户持续对话。以下是长期记忆 profile.md，请优先遵守并引用其中稳定事实。",
@@ -177,7 +262,19 @@ async function buildPromptWithProfile(text: string): Promise<string> {
     "<user_message>",
     text,
     "</user_message>"
-  ].join("\n");
+  ];
+
+  if (fileSkillsPrompt.trim()) {
+    lines.push("");
+    lines.push("<file_skills>");
+    lines.push(fileSkillsPrompt.trim());
+    lines.push("</file_skills>");
+  }
+
+  return {
+    prompt: lines.join("\n"),
+    fileSkillNames
+  };
 }
 
 async function chatWithPi(chatId: string, text: string): Promise<string | null> {
@@ -248,8 +345,10 @@ async function chatWithPi(chatId: string, text: string): Promise<string | null> 
   });
 
   try {
-    const promptWithProfile = await buildPromptWithProfile(text);
-    await chatSession.session.prompt(promptWithProfile);
+    const { prompt, fileSkillNames } = await buildPromptWithProfile(text);
+    debugPromptLog(chatId, prompt);
+    debugToolsLog(chatSession.session, fileSkillNames);
+    await chatSession.session.prompt(prompt);
   } finally {
     unsubscribe();
   }
