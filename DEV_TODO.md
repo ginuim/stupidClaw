@@ -2,7 +2,7 @@
 
 每次修改或开发代码后需更新本文件，勾选已完成项。
 
-当前开发分支：`phase-4-profile-memory`
+当前开发分支：`phase-5-path-jailing`
 
 ## 全局硬约束（必须满足）
 
@@ -74,9 +74,11 @@
 
 ## 第 5 期：安全沙盒
 
-- [ ] `src/memory/workspace-path.ts`
-- [ ] 文件类 Skill 接入路径解析
-- [ ] 验收：越权路径被拒绝、合法路径正常
+- [x] `src/memory/workspace-path.ts`
+- [x] 文件类 Skill 接入路径解析
+- [x] 路径沙盒单测：`src/memory/workspace-path.test.ts`
+- [x] 第 5 期教程文章：`StupidClaw-第5期-安全沙盒PathJailing防止越权读写.md`
+- [x] 验收：越权路径被拒绝、合法路径正常
 
 ---
 

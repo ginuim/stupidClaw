@@ -1,15 +1,15 @@
 import fs from "node:fs";
-import path from "node:path";
 import {
   formatSkillsForPrompt,
   loadSkillsFromDir,
   type Skill
 } from "@mariozechner/pi-coding-agent";
+import { resolveSafePath } from "../memory/workspace-path";
 import type { SkillMeta } from "./contracts";
 
 const PROJECT_SKILL_DIRS = [
   {
-    dir: path.resolve(process.cwd(), ".stupidClaw", "skills"),
+    dir: resolveSafePath("skills"),
     source: "project:.stupidClaw/skills"
   }
 ];

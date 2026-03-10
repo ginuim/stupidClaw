@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { resolveSafePath } from "./workspace-path";
 
 export type HistoryRole = "user" | "assistant";
 export type HistoryEventType = "message" | "tool_call" | "tool_result";
@@ -16,8 +17,7 @@ export interface HistoryEvent {
   isError?: boolean;
 }
 
-const WORKSPACE_DIR = path.resolve(process.cwd(), ".stupidClaw");
-const HISTORY_DIR = path.resolve(WORKSPACE_DIR, "history");
+const HISTORY_DIR = resolveSafePath("history");
 
 function getDateString(date: Date): string {
   const year = date.getUTCFullYear();
@@ -51,7 +51,7 @@ export async function queryHistory(
   input: QueryHistoryInput
 ): Promise<HistoryEvent[]> {
   const date = input.date ?? getDateString(new Date());
-  const filePath = path.resolve(HISTORY_DIR, `${date}.jsonl`);
+  const filePath = resolveSafePath(`history/${date}.jsonl`);
   const limit = Math.max(1, Math.min(input.limit ?? 20, 200));
 
   try {

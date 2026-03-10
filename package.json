@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx src/index.ts",
+    "test": "node --import tsx --test src/**/*.test.ts",
     "typecheck": "tsc --noEmit",
     "build:exe": "bun build ./src/index.ts --compile --outfile ./dist/stupidclaw"
   },

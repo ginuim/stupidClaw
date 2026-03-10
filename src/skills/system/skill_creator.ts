@@ -1,9 +1,10 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { Type } from "@mariozechner/pi-ai";
+import { resolveSafePath } from "../../memory/workspace-path";
 import type { SkillDefinition } from "../contracts";
 
-const PROJECT_SKILLS_ROOT = path.resolve(process.cwd(), ".stupidClaw", "skills");
+const PROJECT_SKILLS_ROOT = resolveSafePath("skills");
 
 function normalizeSkillName(name: string): string {
   return name
@@ -90,8 +91,8 @@ export function createSkillCreatorSkill(): SkillDefinition {
           };
         }
 
-        const skillDir = path.resolve(PROJECT_SKILLS_ROOT, normalizedName);
-        const filePath = path.resolve(skillDir, "SKILL.md");
+        const skillDir = resolveSafePath(`skills/${normalizedName}`);
+        const filePath = path.join(skillDir, "SKILL.md");
         await fs.mkdir(skillDir, { recursive: true });
 
         let exists = false;

@@ -1,5 +1,4 @@
 import fs from "node:fs";
-import path from "node:path";
 import {
   AuthStorage,
   createCodingTools,
@@ -11,6 +10,7 @@ import {
 } from "@mariozechner/pi-coding-agent";
 import { appendHistoryEvent } from "./memory/history-store";
 import { readProfileMarkdown } from "./memory/profile-store";
+import { resolveSafePath } from "./memory/workspace-path";
 import { IDENTITY_PROMPT_LINES } from "./prompt/identity";
 import { loadStandardFileSkills } from "./skills/file-skills";
 import { createSkillRegistry } from "./skills/registry";
@@ -32,7 +32,7 @@ const chatSessions = new Map<string, ChatSession>();
 const skillRegistry = createSkillRegistry();
 const DEBUG_ENGINE = process.env.DEBUG_STUPIDCLAW === "1";
 const DEBUG_PROMPT = process.env.DEBUG_PROMPT === "1";
-const WORKSPACE_ROOT = path.resolve(process.cwd(), ".stupidClaw", "workspace");
+const WORKSPACE_ROOT = resolveSafePath("workspace");
 let startupConfigLogged = false;
 
 function debugLog(message: string): void {

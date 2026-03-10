@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import path from "node:path";
+import { getStupidClawRootPath, resolveSafePath } from "./workspace-path";
 
 export type ProfileSection = "stable_facts" | "preferences" | "constraints";
 
@@ -15,8 +15,8 @@ interface ProfileData {
   constraints: string[];
 }
 
-const WORKSPACE_DIR = path.resolve(process.cwd(), ".stupidClaw");
-const PROFILE_PATH = path.resolve(WORKSPACE_DIR, "profile.md");
+const WORKSPACE_DIR = getStupidClawRootPath();
+const PROFILE_PATH = resolveSafePath("profile.md");
 const SECTION_KEYS: ProfileSection[] = [
   "stable_facts",
   "preferences",
