@@ -2,7 +2,7 @@
 
 每次修改或开发代码后需更新本文件，勾选已完成项。
 
-当前开发分支：`phase-2-webhook`
+当前开发分支：`phase-3-skills-history`
 
 ## 全局硬约束（必须满足）
 
@@ -46,10 +46,10 @@
 
 ## 第 3 期：技能系统
 
-- [ ] `src/memory/history-store.ts`
-- [ ] `src/skills/contracts.ts`
-- [ ] `src/skills/registry.ts`
-- [ ] 技能：get_system_time、list_available_skills、query_history
+- [x] `src/memory/history-store.ts`
+- [x] `src/skills/contracts.ts`
+- [x] `src/skills/registry.ts`
+- [x] 技能：get_system_time、list_available_skills、query_history、skill_creator
 - [ ] 验收：渐进式披露、历史可按日期回溯
 
 ---
