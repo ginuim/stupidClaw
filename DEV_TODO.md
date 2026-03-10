@@ -2,7 +2,7 @@
 
 每次修改或开发代码后需更新本文件，勾选已完成项。
 
-当前开发分支：`phase-1-polling`
+当前开发分支：`phase-2-webhook`
 
 ## 全局硬约束（必须满足）
 
@@ -36,9 +36,10 @@
 
 ## 第 2 期：Webhook 升级
 
-- [ ] `src/gateway.ts`
-- [ ] `src/transport/index.ts`（polling | webhook 切换）
-- [ ] `.env` 新增 `TELEGRAM_MODE`
+- [x] `src/gateway.ts`
+- [x] `src/transport/index.ts`（polling | webhook 切换）
+- [x] `.env` 新增 `TELEGRAM_MODE`
+- [x] 第 2 期教程文章：`StupidClaw-第2期-从Polling升级到Webhook.md`
 - [ ] 验收：两种模式均正常
 
 ---
