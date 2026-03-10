@@ -27,6 +27,7 @@
 - [x] `src/index.ts`
 - [x] `src/engine.ts` 切换为 `pi-mono` 会话驱动（替换临时直调模型实现）
 - [x] 接入 `pi-mono` 的最小 tool-call 循环（先支持常驻空工具集也行）
+- [x] 第 1 期教程文章：`StupidClaw-第1期-先用Polling跑通消息闭环.md`
 - [x] 验收：用户发消息 Bot 能回复
 - [x] 验收：断开重连后 Polling 恢复
 - [x] 验收：整条链路日志可追踪
