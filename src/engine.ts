@@ -3,6 +3,7 @@ import {
   AuthStorage,
   createCodingTools,
   createAgentSession,
+  DefaultResourceLoader,
   formatSkillsForPrompt,
   ModelRegistry,
   SessionManager,
@@ -27,6 +28,7 @@ export interface ChatOutput {
 interface ChatSession {
   session: AgentSession;
   skillRegistry: SkillRegistry;
+  fileSkillNames: string[];
 }
 
 const chatSessions = new Map<string, ChatSession>();
@@ -134,6 +136,18 @@ function fallbackReply(text: string): string {
   return `收到：${text}`;
 }
 
+function stripThinkTags(text: string): string {
+  return text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+}
+
+function buildStaticSystemPrompt(fileSkillsPrompt: string): string {
+  const lines: string[] = [...IDENTITY_PROMPT_LINES];
+  if (fileSkillsPrompt.trim()) {
+    lines.push("", "<file_skills>", fileSkillsPrompt.trim(), "</file_skills>");
+  }
+  return lines.join("\n");
+}
+
 function pickMiniMaxModel(modelRegistry: ModelRegistry) {
   const preferredModelId = process.env.MINIMAX_MODEL;
   const available = modelRegistry.getAvailable();
@@ -210,6 +224,20 @@ async function createChatSession(chatId: string): Promise<ChatSession | null> {
     getDefaultChatId: () => chatId
   });
 
+  const fileSkills = loadStandardFileSkills();
+  const fileSkillNames = fileSkills.map((skill) => skill.name);
+  const fileSkillsPrompt = fileSkills.length > 0 ? formatSkillsForPrompt(fileSkills) : "";
+
+  const loader = new DefaultResourceLoader({
+    noExtensions: true,
+    noSkills: true,
+    noPromptTemplates: true,
+    noThemes: true,
+    systemPromptOverride: () => buildStaticSystemPrompt(fileSkillsPrompt),
+    appendSystemPromptOverride: () => []
+  });
+  await loader.reload();
+
   const { session } = await createAgentSession({
     authStorage,
     cwd: WORKSPACE_ROOT,
@@ -218,11 +246,12 @@ async function createChatSession(chatId: string): Promise<ChatSession | null> {
     sessionManager: SessionManager.inMemory(),
     tools: createCodingTools(WORKSPACE_ROOT),
     customTools: skillRegistry.all.map((skill) => skill.tool),
-    thinkingLevel: "off"
+    thinkingLevel: "off",
+    resourceLoader: loader
   });
 
   debugLog(`chat session created with model=${model.provider}/${model.id}`);
-  return { session, skillRegistry };
+  return { session, skillRegistry, fileSkillNames };
 }
 
 async function getChatSession(chatId: string): Promise<ChatSession | null> {
@@ -248,22 +277,13 @@ function safeAppend(event: Parameters<typeof appendHistoryEvent>[0]): void {
   });
 }
 
-async function buildPromptWithProfile(
-  chatId: string,
-  text: string
-): Promise<{ prompt: string; fileSkillNames: string[] }> {
+async function buildTurnPrompt(chatId: string, text: string): Promise<string> {
   const profile = await readProfileMarkdown();
-  const fileSkills = loadStandardFileSkills();
-  const fileSkillNames = fileSkills.map((skill) => skill.name);
-  const fileSkillsPrompt =
-    fileSkills.length > 0 ? formatSkillsForPrompt(fileSkills) : "";
   const now = new Date();
   const nowIso = now.toISOString();
   const nowLocal = now.toLocaleString("zh-CN", { hour12: false });
 
-  const lines = [
-    ...IDENTITY_PROMPT_LINES,
-    "",
+  return [
     "以下是当前回合的运行上下文，请优先使用，不要向用户重复索要这些信息。",
     "",
     "<runtime_context>",
@@ -281,19 +301,7 @@ async function buildPromptWithProfile(
     "<user_message>",
     text,
     "</user_message>"
-  ];
-
-  if (fileSkillsPrompt.trim()) {
-    lines.push("");
-    lines.push("<file_skills>");
-    lines.push(fileSkillsPrompt.trim());
-    lines.push("</file_skills>");
-  }
-
-  return {
-    prompt: lines.join("\n"),
-    fileSkillNames
-  };
+  ].join("\n");
 }
 
 async function chatWithPi(chatId: string, text: string): Promise<string | null> {
@@ -364,20 +372,20 @@ async function chatWithPi(chatId: string, text: string): Promise<string | null> 
   });
 
   try {
-    const { prompt, fileSkillNames } = await buildPromptWithProfile(chatId, text);
+    const prompt = await buildTurnPrompt(chatId, text);
     debugPromptLog(chatId, prompt);
-    debugToolsLog(chatSession.session, chatSession.skillRegistry, fileSkillNames);
+    debugToolsLog(chatSession.session, chatSession.skillRegistry, chatSession.fileSkillNames);
     await chatSession.session.prompt(prompt);
   } finally {
     unsubscribe();
   }
 
-  const directReply = replyBuffer.trim();
+  const directReply = stripThinkTags(replyBuffer);
   if (directReply) {
     return directReply;
   }
 
-  const stateReply = extractLatestAssistantReply(chatSession.session);
+  const stateReply = stripThinkTags(extractLatestAssistantReply(chatSession.session));
   if (stateReply) {
     return stateReply;
   }

@@ -151,18 +151,24 @@ async function main(): Promise<void> {
   });
 
   await startTransport(token, async (message) => {
-    // 立即通知 Telegram 正在输入，不阻塞主流程
     sendChatAction(token, message.chatId).catch(() => {});
+    const typingInterval = setInterval(() => {
+      sendChatAction(token, message.chatId).catch(() => {});
+    }, 4000);
 
-    const result = await chat({
-      chatId: message.chatId,
-      text: message.text
-    });
-    await sendMessage(token, message.chatId, result.replyText);
-    const updateIdText = message.updateId === undefined ? "-" : String(message.updateId);
-    console.log(
-      `[ok] chatId=${message.chatId} updateId=${updateIdText} text="${message.text}"`
-    );
+    try {
+      const result = await chat({
+        chatId: message.chatId,
+        text: message.text
+      });
+      await sendMessage(token, message.chatId, result.replyText);
+      const updateIdText = message.updateId === undefined ? "-" : String(message.updateId);
+      console.log(
+        `[ok] chatId=${message.chatId} updateId=${updateIdText} text="${message.text}"`
+      );
+    } finally {
+      clearInterval(typingInterval);
+    }
   });
 }
 
