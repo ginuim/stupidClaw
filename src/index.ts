@@ -1,7 +1,9 @@
 import "dotenv/config";
 import fs from "node:fs";
 import path from "node:path";
+import { startCronScheduler } from "./cron";
 import { chat } from "./engine";
+import { createSkillRegistry } from "./skills/registry";
 import { startTransport } from "./transport";
 import { sendMessage } from "./transport/polling";
 
@@ -49,6 +51,32 @@ function registerShutdownHooks(): void {
   });
 }
 
+function toTextOutput(result: unknown): string {
+  if (!result || typeof result !== "object") {
+    return JSON.stringify(result ?? null);
+  }
+
+  const payload = result as {
+    content?: Array<{ type?: string; text?: unknown }>;
+  };
+  const textParts = Array.isArray(payload.content)
+    ? payload.content
+        .filter((item) => item && item.type === "text")
+        .map((item) => (typeof item.text === "string" ? item.text : ""))
+        .filter((item) => item.length > 0)
+    : [];
+
+  if (textParts.length > 0) {
+    return textParts.join("\n");
+  }
+
+  try {
+    return JSON.stringify(result, null, 2);
+  } catch {
+    return "执行完成，但结果无法序列化。";
+  }
+}
+
 async function main(): Promise<void> {
   acquireSingleInstanceLock();
   registerShutdownHooks();
@@ -57,6 +85,70 @@ async function main(): Promise<void> {
   if (!token) {
     throw new Error("Missing TELEGRAM_BOT_TOKEN");
   }
+
+  const skillRegistry = createSkillRegistry();
+  const skillMap = new Map(skillRegistry.all.map((skill) => [skill.name, skill]));
+  startCronScheduler(token, {
+    runSkill: async (skillName, args) => {
+      if (!skillName.trim()) {
+        return {
+          ok: false,
+          output: "任务配置错误：toolName 不能为空。"
+        };
+      }
+      const skill = skillMap.get(skillName);
+      if (!skill) {
+        return {
+          ok: false,
+          output: `未知技能：${skillName}。请先用 manage_cron_jobs 删除或修正任务。`
+        };
+      }
+      try {
+        const result = await skill.tool.execute(
+          "cron",
+          args,
+          undefined,
+          undefined,
+          {} as never
+        );
+        return {
+          ok: true,
+          output: toTextOutput(result)
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          ok: false,
+          output: message
+        };
+      }
+    },
+    runPrompt: async (sessionKey, prompt) => {
+      const text = prompt.trim();
+      if (!text) {
+        return {
+          ok: false,
+          output: "任务配置错误：prompt 不能为空。"
+        };
+      }
+      try {
+        const result = await chat({
+          chatId: sessionKey,
+          text
+        });
+        return {
+          ok: true,
+          output: result.replyText
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          ok: false,
+          output: message
+        };
+      }
+    }
+  });
 
   await startTransport(token, async (message) => {
     const result = await chat({

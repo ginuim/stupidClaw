@@ -1,4 +1,5 @@
 import type { SkillDefinition } from "./contracts";
+import { createManageCronJobsSkill } from "./cron/manage_cron_jobs";
 import { getStandardFileSkillMetas } from "./file-skills";
 import { createQueryHistorySkill } from "./memory/query_history";
 import { createUpdateProfileSkill } from "./memory/update_profile";
@@ -12,15 +13,23 @@ export interface SkillRegistry {
   onDemand: SkillDefinition[];
 }
 
-export function createSkillRegistry(): SkillRegistry {
+export interface SkillRegistryOptions {
+  getDefaultChatId?: () => string | undefined;
+}
+
+export function createSkillRegistry(options: SkillRegistryOptions = {}): SkillRegistry {
   const queryHistory = createQueryHistorySkill();
   const updateProfile = createUpdateProfileSkill();
   const skillCreator = createSkillCreatorSkill();
+  const manageCronJobs = createManageCronJobsSkill({
+    getDefaultChatId: options.getDefaultChatId
+  });
   const baseSkills: SkillDefinition[] = [
     createGetSystemTimeSkill(),
     queryHistory,
     updateProfile,
-    skillCreator
+    skillCreator,
+    manageCronJobs
   ];
   const listAvailable = createListAvailableSkillsSkill(() => {
     const builtIn = baseSkills.map((skill) => ({

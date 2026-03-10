@@ -13,7 +13,7 @@ import { readProfileMarkdown } from "./memory/profile-store";
 import { resolveSafePath } from "./memory/workspace-path";
 import { IDENTITY_PROMPT_LINES } from "./prompt/identity";
 import { loadStandardFileSkills } from "./skills/file-skills";
-import { createSkillRegistry } from "./skills/registry";
+import { createSkillRegistry, type SkillRegistry } from "./skills/registry";
 
 export interface ChatInput {
   chatId: string;
@@ -26,10 +26,10 @@ export interface ChatOutput {
 
 interface ChatSession {
   session: AgentSession;
+  skillRegistry: SkillRegistry;
 }
 
 const chatSessions = new Map<string, ChatSession>();
-const skillRegistry = createSkillRegistry();
 const DEBUG_ENGINE = process.env.DEBUG_STUPIDCLAW === "1";
 const DEBUG_PROMPT = process.env.DEBUG_PROMPT === "1";
 const WORKSPACE_ROOT = resolveSafePath("workspace");
@@ -98,7 +98,11 @@ function collectSessionToolNames(session: AgentSession): string[] {
   return Array.from(names).sort();
 }
 
-function debugToolsLog(session: AgentSession, fileSkillNames: string[]): void {
+function debugToolsLog(
+  session: AgentSession,
+  skillRegistry: SkillRegistry,
+  fileSkillNames: string[]
+): void {
   if (!DEBUG_PROMPT) {
     return;
   }
@@ -164,7 +168,7 @@ function createAuthStorage(): AuthStorage {
   return authStorage;
 }
 
-async function createChatSession(): Promise<ChatSession | null> {
+async function createChatSession(chatId: string): Promise<ChatSession | null> {
   if (!process.env.MINIMAX_API_KEY && !process.env.MINIMAX_CN_API_KEY) {
     debugLog("createChatSession skipped: MINIMAX_API_KEY and MINIMAX_CN_API_KEY missing");
     return null;
@@ -202,6 +206,9 @@ async function createChatSession(): Promise<ChatSession | null> {
   }
 
   fs.mkdirSync(WORKSPACE_ROOT, { recursive: true });
+  const skillRegistry = createSkillRegistry({
+    getDefaultChatId: () => chatId
+  });
 
   const { session } = await createAgentSession({
     authStorage,
@@ -215,7 +222,7 @@ async function createChatSession(): Promise<ChatSession | null> {
   });
 
   debugLog(`chat session created with model=${model.provider}/${model.id}`);
-  return { session };
+  return { session, skillRegistry };
 }
 
 async function getChatSession(chatId: string): Promise<ChatSession | null> {
@@ -225,7 +232,7 @@ async function getChatSession(chatId: string): Promise<ChatSession | null> {
     return existing;
   }
 
-  const created = await createChatSession();
+  const created = await createChatSession(chatId);
   if (!created) {
     return null;
   }
@@ -242,6 +249,7 @@ function safeAppend(event: Parameters<typeof appendHistoryEvent>[0]): void {
 }
 
 async function buildPromptWithProfile(
+  chatId: string,
   text: string
 ): Promise<{ prompt: string; fileSkillNames: string[] }> {
   const profile = await readProfileMarkdown();
@@ -249,9 +257,20 @@ async function buildPromptWithProfile(
   const fileSkillNames = fileSkills.map((skill) => skill.name);
   const fileSkillsPrompt =
     fileSkills.length > 0 ? formatSkillsForPrompt(fileSkills) : "";
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const nowLocal = now.toLocaleString("zh-CN", { hour12: false });
 
   const lines = [
     ...IDENTITY_PROMPT_LINES,
+    "",
+    "以下是当前回合的运行上下文，请优先使用，不要向用户重复索要这些信息。",
+    "",
+    "<runtime_context>",
+    `chat_id=${chatId}`,
+    `now_iso=${nowIso}`,
+    `now_local=${nowLocal}`,
+    "</runtime_context>",
     "",
     "你正在和同一个用户持续对话。以下是长期记忆 profile.md，请优先遵守并引用其中稳定事实。",
     "",
@@ -345,9 +364,9 @@ async function chatWithPi(chatId: string, text: string): Promise<string | null> 
   });
 
   try {
-    const { prompt, fileSkillNames } = await buildPromptWithProfile(text);
+    const { prompt, fileSkillNames } = await buildPromptWithProfile(chatId, text);
     debugPromptLog(chatId, prompt);
-    debugToolsLog(chatSession.session, fileSkillNames);
+    debugToolsLog(chatSession.session, chatSession.skillRegistry, fileSkillNames);
     await chatSession.session.prompt(prompt);
   } finally {
     unsubscribe();

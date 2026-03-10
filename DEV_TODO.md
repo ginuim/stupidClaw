@@ -2,7 +2,7 @@
 
 每次修改或开发代码后需更新本文件，勾选已完成项。
 
-当前开发分支：`phase-5-path-jailing`
+当前开发分支：`phase-6-cron-active-trigger`
 
 ## 全局硬约束（必须满足）
 
@@ -84,10 +84,19 @@
 
 ## 第 6 期：Cron 主动触发
 
-- [ ] `.stupidClaw/cron_jobs.json`
-- [ ] `src/cron.ts`
-- [ ] manage_cron_jobs Skill
-- [ ] 验收：定时任务可触发并推送
+- [x] `.stupidClaw/cron_jobs.json`
+- [x] `src/cron.ts`
+- [x] manage_cron_jobs Skill
+- [x] 第 6 期增强：CronJob 增加 task 结构（mode/requirement/skillNames），支持 prompt 模式任务
+- [x] 第 6 期增强：manage_cron_jobs 支持 update 动作（按 id 局部更新任务）
+- [x] 第 6 期增强：身份提示词加入“定时任务意图 => 优先调用 manage_cron_jobs”规则
+- [x] 第 6 期增强：manage_cron_jobs 支持 chatId 默认当前会话，不再强制用户手填
+- [x] 第 6 期增强：每轮提示词顶层注入 runtime_context（chatId + 当前时间）
+- [x] 第 6 期增强：mode=prompt 强制 skillNames 非空，执行时按技能名拼接调用提示词
+- [x] 第 6 期增强：去掉 mode 字段，改用 toolName 是否存在区分执行路径，数据结构更简洁
+- [x] 修复：manage_cron_jobs toolName/skillNames 描述不清，LLM 将 skill 名误填到 toolName 而非 skillNames
+- [x] 第 6 期教程文章：`StupidClaw-第6期-Cron主动触发让Agent自己干活.md`
+- [x] 验收：定时任务可触发并推送
 
 ---
 
