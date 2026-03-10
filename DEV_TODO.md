@@ -9,7 +9,7 @@
 - [x] 所有核心会话与工具调用流程必须基于 `pi-mono`，禁止自造一套并行 Agent 内核
 - [x] 每期开始前新建分支（`phase-N` 或 `phase-N-描述`）
 - [x] 每次代码改动后都要维护本文件
-- [ ] 每期代码完成后同步更新教程文章
+- [x] 每期代码完成后同步更新教程文章
 
 ---
 
@@ -50,7 +50,10 @@
 - [x] `src/skills/contracts.ts`
 - [x] `src/skills/registry.ts`
 - [x] 技能：get_system_time、list_available_skills、query_history、skill_creator
-- [ ] 验收：渐进式披露、历史可按日期回溯
+- [x] 修复：接入 skills 后仍保留 pi-mono 内建基础工具（read/write/edit/bash）
+- [x] 新增：Agent 文件工具工作目录固定为 `.stupidClaw/workspace`
+- [x] 验收：渐进式披露、历史可按日期回溯
+- [x] 第 3 期教程文章：`StupidClaw-第3期-Skills不是越多越好关键是按需披露.md`
 
 ---
 

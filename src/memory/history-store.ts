@@ -60,7 +60,13 @@ export async function queryHistory(
       .split("\n")
       .map((line) => line.trim())
       .filter((line) => line.length > 0)
-      .map((line) => JSON.parse(line) as HistoryEvent)
+      .flatMap((line) => {
+        try {
+          return [JSON.parse(line) as HistoryEvent];
+        } catch {
+          return [];
+        }
+      })
       .filter((event) => (input.chatId ? event.chatId === input.chatId : true));
     return events.slice(-limit);
   } catch (error) {

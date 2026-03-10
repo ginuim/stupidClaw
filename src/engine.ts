@@ -1,5 +1,8 @@
+import fs from "node:fs";
+import path from "node:path";
 import {
   AuthStorage,
+  createCodingTools,
   createAgentSession,
   ModelRegistry,
   SessionManager,
@@ -19,13 +22,12 @@ export interface ChatOutput {
 
 interface ChatSession {
   session: AgentSession;
-  enableSkills: boolean;
 }
 
-const skillChatSessions = new Map<string, ChatSession>();
-const plainChatSessions = new Map<string, ChatSession>();
+const chatSessions = new Map<string, ChatSession>();
 const skillRegistry = createSkillRegistry();
 const DEBUG_ENGINE = process.env.DEBUG_STUPIDCLAW === "1";
+const WORKSPACE_ROOT = path.resolve(process.cwd(), ".stupidClaw", "workspace");
 let startupConfigLogged = false;
 
 function debugLog(message: string): void {
@@ -51,11 +53,8 @@ function fallbackReply(text: string): string {
 function pickMiniMaxModel(modelRegistry: ModelRegistry) {
   const preferredModelId = process.env.MINIMAX_MODEL;
   const available = modelRegistry.getAvailable();
-  const minimaxAvailable = available.filter(
-    (model) => model.provider === "minimax" || model.provider === "minimax-cn"
-  );
-  debugLog(
-    `available models=${available.length}, minimax models=${minimaxAvailable.length}, preferred=${preferredModelId ?? "(none)"}`
+  const minimaxAvailable = available.filter((model) =>
+    ["minimax", "minimax-cn"].includes(model.provider)
   );
 
   if (preferredModelId) {
@@ -69,27 +68,29 @@ function pickMiniMaxModel(modelRegistry: ModelRegistry) {
     debugLog(`preferred model not found: ${preferredModelId}`);
   }
 
-  const selected =
+  return (
     minimaxAvailable.find((model) => model.provider === "minimax-cn") ??
     minimaxAvailable.find((model) => model.provider === "minimax") ??
-    available[0];
-  if (selected) {
-    debugLog(`selected fallback model=${selected.provider}/${selected.id}`);
-  }
-  return selected;
+    available[0]
+  );
 }
 
-async function createChatSession(enableSkills: boolean): Promise<ChatSession | null> {
-  if (!process.env.MINIMAX_API_KEY && !process.env.MINIMAX_CN_API_KEY) {
-    debugLog("createChatSession skipped: MINIMAX_API_KEY and MINIMAX_CN_API_KEY missing");
-    return null;
-  }
-
+function createAuthStorage(): AuthStorage {
   const authStorage = AuthStorage.create();
   if (process.env.MINIMAX_API_KEY && !process.env.MINIMAX_CN_API_KEY) {
     authStorage.setRuntimeApiKey("minimax-cn", process.env.MINIMAX_API_KEY);
     debugLog("MINIMAX_CN_API_KEY missing; reuse MINIMAX_API_KEY for minimax-cn");
   }
+  return authStorage;
+}
+
+async function createChatSession(): Promise<ChatSession | null> {
+  if (!process.env.MINIMAX_API_KEY && !process.env.MINIMAX_CN_API_KEY) {
+    debugLog("createChatSession skipped: MINIMAX_API_KEY and MINIMAX_CN_API_KEY missing");
+    return null;
+  }
+
+  const authStorage = createAuthStorage();
   const modelRegistry = new ModelRegistry(authStorage);
   const model = pickMiniMaxModel(modelRegistry);
 
@@ -109,6 +110,7 @@ async function createChatSession(enableSkills: boolean): Promise<ChatSession | n
           selectedProvider: model.provider,
           selectedModelId: model.id,
           selectedBaseUrl: model.baseUrl,
+          workspaceRoot: WORKSPACE_ROOT,
           minimaxApiKeyMasked: maskSecret(process.env.MINIMAX_API_KEY),
           minimaxCnApiKeyMasked: maskSecret(process.env.MINIMAX_CN_API_KEY),
           debugEnabled: DEBUG_ENGINE
@@ -119,81 +121,67 @@ async function createChatSession(enableSkills: boolean): Promise<ChatSession | n
     );
   }
 
+  fs.mkdirSync(WORKSPACE_ROOT, { recursive: true });
+
   const { session } = await createAgentSession({
     authStorage,
+    cwd: WORKSPACE_ROOT,
     modelRegistry,
     model,
     sessionManager: SessionManager.inMemory(),
-    tools: [],
-    customTools: enableSkills ? skillRegistry.all.map((skill) => skill.tool) : [],
+    tools: createCodingTools(WORKSPACE_ROOT),
+    customTools: skillRegistry.all.map((skill) => skill.tool),
     thinkingLevel: "off"
   });
 
-  debugLog(
-    `chat session created with model=${model.provider}/${model.id}, tools=${enableSkills ? skillRegistry.all.length : 0}`
-  );
-  return { session, enableSkills };
+  debugLog(`chat session created with model=${model.provider}/${model.id}`);
+  return { session };
 }
 
-async function getChatSession(
-  chatId: string,
-  enableSkills: boolean
-): Promise<ChatSession | null> {
-  const sessions = enableSkills ? skillChatSessions : plainChatSessions;
-  const existing = sessions.get(chatId);
+async function getChatSession(chatId: string): Promise<ChatSession | null> {
+  const existing = chatSessions.get(chatId);
   if (existing) {
-    debugLog(
-      `reuse session for chatId=${chatId}, enableSkills=${existing.enableSkills}`
-    );
+    debugLog(`reuse session for chatId=${chatId}`);
     return existing;
   }
 
-  const created = await createChatSession(enableSkills);
+  const created = await createChatSession();
   if (!created) {
     return null;
   }
-  sessions.set(chatId, created);
-  debugLog(`store new session for chatId=${chatId}, enableSkills=${enableSkills}`);
+  chatSessions.set(chatId, created);
+  debugLog(`store new session for chatId=${chatId}`);
   return created;
 }
 
-async function chatWithPiInternal(
-  chatId: string,
-  text: string,
-  enableSkills: boolean
-): Promise<string | null> {
-  const chatSession = await getChatSession(chatId, enableSkills);
+function safeAppend(event: Parameters<typeof appendHistoryEvent>[0]): void {
+  appendHistoryEvent(event).catch((error) => {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[error] append history failed: ${message}`);
+  });
+}
+
+async function chatWithPi(chatId: string, text: string): Promise<string | null> {
+  const chatSession = await getChatSession(chatId);
   if (!chatSession) {
     return null;
   }
 
-  let streamBuffer = "";
-  let endBuffer = "";
-  let toolStartCount = 0;
-  let messageUpdateCount = 0;
-  const safeAppend = (event: Parameters<typeof appendHistoryEvent>[0]) => {
-    appendHistoryEvent(event).catch((error) => {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error(`[error] append history failed: ${message}`);
-    });
-  };
+  let replyBuffer = "";
 
   const unsubscribe = chatSession.session.subscribe((event) => {
-    if (event.type === "message_update") {
-      messageUpdateCount += 1;
-    }
     if (
       event.type === "message_update" &&
       event.assistantMessageEvent.type === "text_delta"
     ) {
-      streamBuffer += event.assistantMessageEvent.delta;
+      replyBuffer += event.assistantMessageEvent.delta;
       return;
     }
     if (
       event.type === "message_update" &&
       event.assistantMessageEvent.type === "text_end"
     ) {
-      endBuffer = `${endBuffer}${event.assistantMessageEvent.content}`;
+      replyBuffer += event.assistantMessageEvent.content;
       return;
     }
     if (
@@ -202,23 +190,11 @@ async function chatWithPiInternal(
     ) {
       const doneText = extractAssistantText(event.assistantMessageEvent.message);
       if (doneText) {
-        endBuffer = doneText;
+        replyBuffer = doneText;
       }
-      debugLog(`assistant done reason=${event.assistantMessageEvent.reason}`);
       return;
     }
-    if (
-      event.type === "message_update" &&
-      event.assistantMessageEvent.type === "error"
-    ) {
-      debugLog(
-        `assistant stream error reason=${event.assistantMessageEvent.reason}`
-      );
-      return;
-    }
-
     if (event.type === "tool_execution_start") {
-      toolStartCount += 1;
       safeAppend({
         ts: new Date().toISOString(),
         chatId,
@@ -243,14 +219,6 @@ async function chatWithPiInternal(
         result: JSON.stringify(event.result ?? null),
         isError: event.isError
       });
-      return;
-    }
-
-    if (event.type === "message_end") {
-      const messageText = extractAssistantText(event.message);
-      if (messageText) {
-        endBuffer = messageText;
-      }
     }
   });
 
@@ -260,42 +228,22 @@ async function chatWithPiInternal(
     unsubscribe();
   }
 
-  const reply = streamBuffer.trim();
-  if (reply.length > 0) {
-    debugLog(`reply from text_delta length=${reply.length}`);
-    return reply;
+  const directReply = replyBuffer.trim();
+  if (directReply) {
+    return directReply;
   }
-  const fallbackFromMessageEnd = endBuffer.trim();
-  if (fallbackFromMessageEnd.length > 0) {
-    debugLog(`reply from message_end/text_end length=${fallbackFromMessageEnd.length}`);
-    return fallbackFromMessageEnd;
-  }
+
   const stateReply = extractLatestAssistantReply(chatSession.session);
   if (stateReply) {
-    debugLog(
-      `reply from session state length=${stateReply.length}, enableSkills=${enableSkills}`
-    );
     return stateReply;
   }
+
   const assistantError = extractLatestAssistantError(chatSession.session);
   if (assistantError) {
-    debugLog(`assistant error captured: ${assistantError}`);
     return `模型调用失败：${assistantError}`;
   }
-  debugLog(
-    `no assistant text captured from pi session (message_updates=${messageUpdateCount}, tool_calls=${toolStartCount}, state_messages=${chatSession.session.agent.state.messages.length}, enableSkills=${enableSkills})`
-  );
-  debugLog(`session tail summary: ${summarizeMessages(chatSession.session)}`);
-  return null;
-}
 
-async function chatWithPi(chatId: string, text: string): Promise<string | null> {
-  const withSkills = await chatWithPiInternal(chatId, text, true);
-  if (withSkills) {
-    return withSkills;
-  }
-  debugLog("retry with plain pi session (skills disabled)");
-  return chatWithPiInternal(chatId, text, false);
+  return null;
 }
 
 function extractLatestAssistantReply(session: AgentSession): string {
@@ -367,35 +315,6 @@ function extractAssistantText(message: unknown): string {
     return parts.join("");
   }
   return "";
-}
-
-function summarizeMessages(session: AgentSession): string {
-  const messages = session.agent.state.messages as Array<{
-    role?: string;
-    content?: unknown;
-  }>;
-  const tail = messages.slice(-3);
-  return tail
-    .map((message, index) => {
-      const role = message.role ?? "unknown";
-      if (typeof message.content === "string") {
-        return `${index}:${role}:string(${message.content.length})`;
-      }
-      if (Array.isArray(message.content)) {
-        const kinds = message.content
-          .map((item) => {
-            if (!item || typeof item !== "object") {
-              return "unknown";
-            }
-            const maybeType = (item as { type?: unknown }).type;
-            return typeof maybeType === "string" ? maybeType : "object";
-          })
-          .join(",");
-        return `${index}:${role}:array[${kinds}]`;
-      }
-      return `${index}:${role}:other`;
-    })
-    .join(" | ");
 }
 
 export async function chat(input: ChatInput): Promise<ChatOutput> {

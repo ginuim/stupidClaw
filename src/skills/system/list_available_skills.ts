@@ -25,7 +25,7 @@ export function createListAvailableSkillsSkill(
                   description: skill.description
                 })),
                 guidance:
-                  "先使用 always 技能；需要历史等能力时再调用 on_demand 技能。"
+                  "先使用 always 技能；需要历史等能力时再调用 on_demand 技能。注意：read/write/edit/bash 是内建基础工具，不属于 skills 列表，默认始终可用，且默认工作目录是 .stupidClaw/workspace。"
               },
               null,
               2
