@@ -3,6 +3,8 @@
 大智若愚的本地 Agent：  
 `pi-mono` + `MiniMax M2.5` + Telegram + 纯文件系统记忆。
 
+## 官方网站：[stupidClaw](https://stupidclaw.reaidea.com)
+
 ## 项目边界
 
 - 只用文件系统，不引入数据库和向量库。
