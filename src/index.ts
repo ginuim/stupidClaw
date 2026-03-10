@@ -5,7 +5,7 @@ import { startCronScheduler } from "./cron";
 import { chat } from "./engine";
 import { createSkillRegistry } from "./skills/registry";
 import { startTransport } from "./transport";
-import { sendMessage } from "./transport/polling";
+import { sendChatAction, sendMessage } from "./transport/polling";
 
 const WORKSPACE_DIR = path.resolve(process.cwd(), ".stupidClaw");
 const LOCK_FILE = path.resolve(WORKSPACE_DIR, "polling.lock");
@@ -151,6 +151,9 @@ async function main(): Promise<void> {
   });
 
   await startTransport(token, async (message) => {
+    // 立即通知 Telegram 正在输入，不阻塞主流程
+    sendChatAction(token, message.chatId).catch(() => {});
+
     const result = await chat({
       chatId: message.chatId,
       text: message.text
