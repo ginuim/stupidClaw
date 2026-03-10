@@ -18,12 +18,27 @@ function buildApiUrl(token: string, method: string): string {
   return `${TELEGRAM_API_BASE}/bot${token}/${method}`;
 }
 
-export async function getUpdates(
+async function disableWebhook(token: string): Promise<void> {
+  const url = buildApiUrl(token, "deleteWebhook");
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      drop_pending_updates: false
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`deleteWebhook failed: HTTP ${response.status}`);
+  }
+}
+
+async function fetchUpdatesOnce(
   token: string,
   offset: number
-): Promise<TelegramMessage[]> {
+): Promise<Response> {
   const url = buildApiUrl(token, "getUpdates");
-  const response = await fetch(url, {
+  return fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -32,6 +47,17 @@ export async function getUpdates(
       allowed_updates: ["message"]
     })
   });
+}
+
+export async function getUpdates(
+  token: string,
+  offset: number
+): Promise<TelegramMessage[]> {
+  let response = await fetchUpdatesOnce(token, offset);
+  if (response.status === 409) {
+    await disableWebhook(token);
+    response = await fetchUpdatesOnce(token, offset);
+  }
 
   if (!response.ok) {
     throw new Error(`getUpdates failed: HTTP ${response.status}`);

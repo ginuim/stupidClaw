@@ -4,12 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun run src/index.ts",
+    "dev": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
     "build:exe": "bun build ./src/index.ts --compile --outfile ./dist/stupidclaw"
   },
   "devDependencies": {
     "@types/node": "^24.5.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@mariozechner/pi-coding-agent": "^0.57.1",
+    "dotenv": "^17.3.1"
   }
 }

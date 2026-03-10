@@ -1,3 +1,11 @@
+import {
+  AuthStorage,
+  createAgentSession,
+  ModelRegistry,
+  SessionManager,
+  type AgentSession
+} from "@mariozechner/pi-coding-agent";
+
 export interface ChatInput {
   chatId: string;
   text: string;
@@ -7,54 +15,100 @@ export interface ChatOutput {
   replyText: string;
 }
 
-const MINIMAX_API_URL = "https://api.minimax.chat/v1/text/chatcompletion_v2";
+interface ChatSession {
+  session: AgentSession;
+}
+
+const chatSessions = new Map<string, ChatSession>();
 
 function fallbackReply(text: string): string {
   return `收到：${text}`;
 }
 
-async function callMiniMax(text: string): Promise<string> {
-  const apiKey = process.env.MINIMAX_API_KEY;
-  const model = process.env.MINIMAX_MODEL ?? "MiniMax-M2.5";
-
-  if (!apiKey) {
-    return fallbackReply(text);
+function pickMiniMaxModel(modelRegistry: ModelRegistry) {
+  const preferredModelId = process.env.MINIMAX_MODEL;
+  if (preferredModelId) {
+    const preferred =
+      modelRegistry.find("minimax", preferredModelId) ||
+      modelRegistry.find("minimax-cn", preferredModelId);
+    if (preferred) {
+      return preferred;
+    }
   }
 
-  const response = await fetch(MINIMAX_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        {
-          role: "system",
-          content: "你是 StupidClaw，回答简短直接。"
-        },
-        {
-          role: "user",
-          content: text
-        }
-      ],
-      temperature: 0.2
-    })
+  const available = modelRegistry.getAvailable();
+  const minimax = available.find(
+    (model) => model.provider === "minimax" || model.provider === "minimax-cn"
+  );
+  return minimax ?? available[0];
+}
+
+async function createChatSession(): Promise<ChatSession | null> {
+  if (!process.env.MINIMAX_API_KEY && !process.env.MINIMAX_CN_API_KEY) {
+    return null;
+  }
+
+  const authStorage = AuthStorage.create();
+  const modelRegistry = new ModelRegistry(authStorage);
+  const model = pickMiniMaxModel(modelRegistry);
+
+  if (!model) {
+    return null;
+  }
+
+  const { session } = await createAgentSession({
+    authStorage,
+    modelRegistry,
+    model,
+    sessionManager: SessionManager.inMemory(),
+    tools: [],
+    thinkingLevel: "off"
   });
 
-  if (!response.ok) {
-    return fallbackReply(text);
+  return { session };
+}
+
+async function getChatSession(chatId: string): Promise<ChatSession | null> {
+  const existing = chatSessions.get(chatId);
+  if (existing) {
+    return existing;
   }
 
-  const data = (await response.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-  const content = data.choices?.[0]?.message?.content?.trim();
-  return content || fallbackReply(text);
+  const created = await createChatSession();
+  if (!created) {
+    return null;
+  }
+  chatSessions.set(chatId, created);
+  return created;
+}
+
+async function chatWithPi(chatId: string, text: string): Promise<string | null> {
+  const chatSession = await getChatSession(chatId);
+  if (!chatSession) {
+    return null;
+  }
+
+  let streamBuffer = "";
+  const unsubscribe = chatSession.session.subscribe((event) => {
+    if (event.type !== "message_update") {
+      return;
+    }
+    if (event.assistantMessageEvent.type === "text_delta") {
+      streamBuffer += event.assistantMessageEvent.delta;
+    }
+  });
+
+  try {
+    await chatSession.session.prompt(text);
+  } finally {
+    unsubscribe();
+  }
+
+  const reply = streamBuffer.trim();
+  return reply.length > 0 ? reply : null;
 }
 
 export async function chat(input: ChatInput): Promise<ChatOutput> {
-  const replyText = await callMiniMax(input.text);
-  return { replyText: `[${input.chatId}] ${replyText}` };
+  const piReply = await chatWithPi(input.chatId, input.text);
+  return { replyText: piReply ?? fallbackReply(input.text) };
 }
