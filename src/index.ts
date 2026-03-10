@@ -5,7 +5,6 @@ import { startCronScheduler } from "./cron";
 import { chat } from "./engine";
 import { createSkillRegistry } from "./skills/registry";
 import { startTransport } from "./transport";
-import { sendChatAction, sendMessage } from "./transport/polling";
 
 const WORKSPACE_DIR = path.resolve(process.cwd(), ".stupidClaw");
 const LOCK_FILE = path.resolve(WORKSPACE_DIR, "polling.lock");
@@ -151,9 +150,9 @@ async function main(): Promise<void> {
   });
 
   await startTransport(token, async (message) => {
-    sendChatAction(token, message.chatId).catch(() => {});
+    message.sendChatAction().catch(() => {});
     const typingInterval = setInterval(() => {
-      sendChatAction(token, message.chatId).catch(() => {});
+      message.sendChatAction().catch(() => {});
     }, 4000);
 
     try {
@@ -161,7 +160,7 @@ async function main(): Promise<void> {
         chatId: message.chatId,
         text: message.text
       });
-      await sendMessage(token, message.chatId, result.replyText);
+      await message.reply(result.replyText);
       const updateIdText = message.updateId === undefined ? "-" : String(message.updateId);
       console.log(
         `[ok] chatId=${message.chatId} updateId=${updateIdText} text="${message.text}"`

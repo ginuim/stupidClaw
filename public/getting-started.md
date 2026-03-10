@@ -1,0 +1,122 @@
+# StupidClaw 快速上手指南
+
+欢迎使用 StupidClaw！这是一个极简、本地优先、支持长轮询与 Webhook、自带简易网页端 IM 且完全由纯文件系统驱动的 AI Agent。
+
+本文将手把手带你完成从获取必要凭证到成功启动机器人的全过程。
+
+---
+
+## 步骤一：获取必要凭证
+
+StupidClaw 默认依赖两个外部服务：**Telegram**（作为主要交互界面）和 **MiniMax**（作为大语言模型驱动核心）。
+
+### 1. 获取 Telegram Bot Token
+> **提示**：如果你无法访问 Telegram，也可以跳过此步骤，直接使用项目内置的 [网页版简易 IM（StupidIM）](#网页端简易-imstupidim使用说明)。
+
+1. 打开 Telegram，搜索并添加官方机器人 [BotFather](https://t.me/botfather)。
+2. 在对话框中输入 `/newbot` 创建一个新的机器人。
+3. 按照提示，给你的机器人起一个**名字（Name）**（任意，可重复）和一个**用户名（Username）**（必须以 `bot` 结尾，不可重复，如 `MyStupidClaw_bot`）。
+4. 创建成功后，BotFather 会回复你一段包含 `Token` 的消息（类似 `123456789:ABCdefGHIjklmNOPqrsTUVwxyz`）。请妥善保存这串字符，这就是你的 `TELEGRAM_BOT_TOKEN`。
+
+### 2. 获取 MiniMax API Key
+StupidClaw 默认使用 MiniMax 的 `MiniMax-M2.5` 模型。
+1. 访问 [MiniMax 开放平台](https://platform.minimaxi.com/) 并注册账号。
+2. 登录后，进入左侧菜单的“账户管理” -> “API Key”。
+3. 点击“创建 API Key”，复制生成的字符串，这就是你的 `MINIMAX_API_KEY`。
+
+*(注：如果你想换成其他兼容的模型，可自行在代码 `src/engine.ts` 中调整配置。)*
+
+---
+
+## 步骤二：项目初始化与配置
+
+### 1. 下载代码与安装依赖
+确保你本地已经安装了 Node.js（推荐 v20+）和 `pnpm`。
+
+```bash
+git clone <项目地址>
+cd stupidClaw
+pnpm install
+```
+
+### 2. 配置环境变量
+项目根目录下有一个 `.env.example` 文件，我们需要根据它创建一份真实的配置文件：
+
+```bash
+cp .env.example .env
+```
+
+打开刚刚复制出来的 `.env` 文件，填入你刚才获取的凭证：
+
+```dotenv
+MINIMAX_API_KEY=在这里填入你的MiniMax_API_Key
+MINIMAX_MODEL=MiniMax-M2.5
+
+# 如果你不用 Telegram，可以随便填或者留空
+TELEGRAM_BOT_TOKEN=在这里填入你的Telegram_Token
+TELEGRAM_MODE=polling
+
+# StupidIM (网页端) 配置
+STUPID_IM_TOKEN=在这里填入你想设置的密码凭证(例如: my_super_secret)
+STUPID_IM_PORT=8080
+STUPID_IM_CHAT_ID=my_test_chat_id
+```
+
+---
+
+## 步骤三：启动 StupidClaw
+
+一切准备就绪后，只需在终端中运行：
+
+```bash
+pnpm dev
+```
+
+看到控制台输出如下内容时，说明机器人已经启动成功了：
+```text
+[boot] StupidIM started on port 8080
+[boot] StupidClaw Telegram polling started
+```
+
+此时，如果你配置了 Telegram，你可以直接在 Telegram 里搜索你创建的那个机器人的 Username，点击“Start”，跟它打个招呼，它就会回复你了！
+
+---
+
+## 网页端简易 IM（StupidIM）使用说明
+
+如果你没有梯子无法访问 Telegram，没关系！StupidClaw 内置了一个极简的网页版客户端。
+
+在项目正常启动（`pnpm dev` 保持运行）的情况下，终端日志会打印出一段链接：
+
+```text
+[boot] StupidIM HTTP Server started on port 8080
+
+==================================================
+🟢 StupidIM 网页端已启动！请按住 Command/Ctrl 点击下方链接：
+http://localhost:8080/?token=my_super_secret_token&chatId=my_test_chat_id&url=ws%3A%2F%2Flocalhost%3A8080
+==================================================
+```
+
+你只需要：
+1. **按住键盘的 `Command` (macOS) 或 `Ctrl` (Windows)**。
+2. **用鼠标点击终端中这段蓝色的链接**，或者手动复制粘贴到浏览器打开。
+3. 网页打开后会自动填充好各项配置，直接点击界面上的 **“连接”** 按钮。
+4. 连接成功后右上角会显示绿色状态，现在你就可以像使用微信一样，在网页端直接和 StupidClaw 对话了！
+
+---
+
+## 打包成独立可执行文件 (可选)
+
+如果你想把这个项目部署到服务器上，或者发给没有安装 Node.js 的朋友运行，你可以利用 Bun 将其打包成一个单文件的二进制程序。
+
+1. 确保已在项目中运行过 `pnpm install` 安装相关依赖。
+2. 运行打包命令：
+   ```bash
+   pnpm run build:exe
+   ```
+3. 打包完成后，在 `dist` 目录下会生成一个名为 `stupidclaw` 的可执行文件（大小约 60MB+）。
+4. 你只需要把这个 `stupidclaw` 文件和你的 `.env` 文件放在**同一个目录**下，直接运行它即可，**无需任何其他依赖**！
+
+```bash
+./stupidclaw
+```

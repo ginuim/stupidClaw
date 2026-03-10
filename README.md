@@ -42,7 +42,11 @@ stupidClaw/
 └─ DEV_TODO.md
 ```
 
-## 5 分钟启动（第 1 期基线）
+## 5 分钟启动
+
+详见完整的 [快速上手指南](public/getting-started.md) 获取详细的步骤（包括如何申请 Telegram Bot Token 和 API Key 等，以及如何使用内置网页端 IM）。
+
+简要步骤如下：
 
 1. 安装依赖
 
@@ -57,7 +61,7 @@ cp .env.example .env
 ```
 
 至少填写：
-- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_BOT_TOKEN` (如果你使用网页端 IM，可以随便填)
 - `MINIMAX_API_KEY`（不填会走本地回显 fallback）
 
 3. 启动
@@ -65,6 +69,8 @@ cp .env.example .env
 ```bash
 pnpm dev
 ```
+
+如果你想使用内置的免梯子网页端 IM，启动后直接点击终端中输出的绿色链接即可！
 
 ## 开发计划（7 期执行版）
 
@@ -111,7 +117,7 @@ pnpm dev
   - 执行日志落到 history
 
 ### 第 7 期：发布收口
-- 项目结构：`README.md`、`.env.example`、`docs/troubleshooting.md`。
+- 项目结构：`README.md`、`.env.example`、`public/troubleshooting.md`。
 - 关键代码：
   - 最小启动脚本与故障排查
   - 可选 `bun build --compile` 独立可执行构建

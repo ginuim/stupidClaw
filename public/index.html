@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StupidClaw | 大智若愚的极简本地 Agent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #000000;
+            --bg-surface: rgba(20, 20, 20, 0.6);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #ededed;
+            --text-secondary: #888888;
+            --accent: #00E676; /* Hacker Green */
+            --accent-glow: rgba(0, 230, 118, 0.15);
+            
+            --font-sans: 'Inter', system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* 顶部导航 */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 4rem;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-weight: 900;
+            font-size: 1.2rem;
+            letter-spacing: -0.02em;
+        }
+
+        .logo span { color: var(--text-secondary); }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-left: 2rem;
+            transition: color 0.2s;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover { color: var(--text-primary); }
+
+        /* 背景网格装饰 */
+        .grid-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: 
+                linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 4rem 4rem;
+            mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+            -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+            z-index: -1;
+        }
+
+        main {
+            padding: 8rem 4rem 4rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Hero 区域 */
+        .hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 6rem;
+            position: relative;
+        }
+
+        .hero-badge {
+            background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid var(--border-color);
+            padding: 0.4rem 1rem;
+            border-radius: 100px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: #a1a1aa;
+            margin-bottom: 2rem;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);
+        }
+
+        .hero h1 {
+            font-size: clamp(3rem, 6vw, 5.5rem);
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: -0.04em;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(180deg, #FFFFFF 0%, #999999 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin-bottom: 3rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            font-weight: 500;
+            text-decoration: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: var(--text-primary);
+            color: var(--bg-base);
+            box-shadow: 0 4px 14px rgba(255,255,255,0.1);
+        }
+
+        .btn-primary:hover {
+            background-color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(255,255,255,0.15);
+        }
+
+        .btn-secondary {
+            background-color: rgba(255,255,255,0.03);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        /* 终端效果 */
+        .terminal-wrapper {
+            width: 100%;
+            max-width: 800px;
+            margin: 4rem auto 0;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: linear-gradient(180deg, #0a0a0a 0%, #000000 100%);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 80px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.1);
+            overflow: hidden;
+            text-align: left;
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 1rem;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .terminal-dots { display: flex; gap: 6px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .dot.red { background: #ff5f56; }
+        .dot.yellow { background: #ffbd2e; }
+        .dot.green { background: #27c93f; }
+
+        .terminal-title {
+            margin: 0 auto;
+            color: #666;
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            transform: translateX(-24px);
+        }
+
+        .terminal-body {
+            padding: 1.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #d1d5db;
+        }
+
+        .prompt::before { content: "$ "; color: var(--accent); }
+        .comment { color: #6b7280; }
+        .success { color: var(--accent); }
+        .info { color: #60a5fa; }
+
+        /* 特性网格 - 质感核心区域 */
+        .features-header {
+            text-align: center;
+            margin-bottom: 4rem;
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: linear-gradient(145deg, rgba(20,20,20,0.8) 0%, rgba(5,5,5,0.9) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            /* 内发光与底部阴影，塑造立体感 */
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), 0 4px 20px rgba(0, 0, 0, 0.5);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* 卡片顶部的极细高光线 */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.0), transparent);
+            transition: background 0.4s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(255, 255, 255, 0.12);
+            /* 悬浮时，增加品牌色的微光扩散 */
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08), 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 230, 118, 0.05);
+        }
+
+        .card:hover::before {
+            /* 悬浮时，顶部边缘亮起 Hacker Green */
+            background: linear-gradient(90deg, transparent, rgba(0, 230, 118, 0.4), transparent);
+        }
+
+        /* 图标的质感底座 */
+        .card-icon-wrapper {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            font-size: 1.4rem;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);
+            transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+        }
+
+        .card:hover .card-icon-wrapper {
+            transform: scale(1.05);
+            border-color: rgba(0, 230, 118, 0.3);
+            background: linear-gradient(135deg, rgba(0, 230, 118, 0.1) 0%, rgba(255,255,255,0.02) 100%);
+        }
+
+        .card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            color: #f4f4f5;
+            letter-spacing: -0.01em;
+        }
+
+        .card p {
+            font-size: 0.95rem;
+            color: #a1a1aa;
+            line-height: 1.6;
+        }
+
+        footer {
+            margin-top: 6rem;
+            padding: 3rem 0;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            nav { padding: 1rem 2rem; }
+            main { padding: 6rem 2rem 2rem; }
+            .hero h1 { font-size: 2.5rem; }
+            .grid { grid-template-columns: 1fr; }
+            .terminal-wrapper { margin-top: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="grid-bg"></div>
+
+    <nav>
+        <div class="logo">Stupid<span>Claw.</span></div>
+        <div class="nav-links">
+            <a href="#features">特性</a>
+            <a href="#docs">文档</a>
+            <a href="https://github.com/ginuim/stupidClaw" target="_blank">GitHub</a>
+        </div>
+    </nav>
+
+    <main>
+        <section class="hero">
+            <div class="hero-badge">K.I.S.S 原则 · 纯本地 · 零数据库</div>
+            <h1>大智若愚的<br>极简本地 Agent.</h1>
+            <p>基于 pi-mono 底座。抛弃臃肿的 ChromaDB 和过度封装，回归纯粹的文件系统与极其克制的代码美学。</p>
+            
+            <div class="btn-group">
+                <a href="#quickstart" class="btn btn-primary">快速开始</a>
+                <a href="#features" class="btn btn-secondary">了解架构</a>
+            </div>
+
+            <div class="terminal-wrapper" id="quickstart">
+                <div class="terminal-header">
+                    <div class="terminal-dots">
+                        <div class="dot red"></div>
+                        <div class="dot yellow"></div>
+                        <div class="dot green"></div>
+                    </div>
+                    <div class="terminal-title">bash - stupidClaw</div>
+                </div>
+                <div class="terminal-body">
+                    <div class="comment"># 告别繁琐的 Webhook 配置，WebSocket 本地极速启动</div>
+                    <div><span class="prompt"></span>git clone https://github.com/your-repo/stupidClaw</div>
+                    <div><span class="prompt"></span>cd stupidClaw && pnpm install</div>
+                    <div><span class="prompt"></span>cp .env.example .env</div>
+                    <br>
+                    <div><span class="prompt"></span>pnpm run dev --mode=websocket</div>
+                    <div class="info">[INFO]  Engine: pi-mono core initialized.</div>
+                    <div class="info">[INFO]  Memory: Local .stupidClaw/ workspace mounted.</div>
+                    <div class="success">[READY] StupidClaw WebSocket server running on ws://localhost:3000</div>
+                    <div class="success">[READY] Open http://localhost:3000 in browser to start chatting!</div>
+                    <span style="animation: pulse 1s infinite;">_</span>
+                </div>
+            </div>
+        </section>
+
+        <h2 class="features-header" id="features">核心哲学</h2>
+        
+        <section class="grid">
+            <div class="card">
+                <div class="card-icon-wrapper">🪶</div>
+                <h3>极低内存占用</h3>
+                <p>抛弃 Redis 和各类向量数据库。仅依赖 Node.js 运行时，几十 MB 内存即可常驻后台，即使在吃灰的树莓派上也能如丝般顺滑运行。</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-icon-wrapper">🧩</div>
+                <h3>渐进式技能披露</h3>
+                <p>告别 Token 爆炸。大模型不再被强行塞入上百个工具，而是先查询本地工具目录，再动态按需加载（Lazy Loading）工具上下文，显著降低幻觉率。</p>
+            </div>
+
+            <div class="card">
+                <div class="card-icon-wrapper">⚡️</div>
+                <h3>WebSocket 极速接入</h3>
+                <p>想快速测试功能，不想被 Telegram 代理卡住？内置 WebSocket 极简通信层，启动即附带本地测试页，聊爽了再一键切换至 Telegram。</p>
+            </div>
+
+            <div class="card">
+                <div class="card-icon-wrapper">🛡️</div>
+                <h3>防呆安全沙盒</h3>
+                <p>我们没有复杂的虚拟机隔离，而是采用“路径锁 (Path Jailing)”。赋予 AI 读写本地文件的能力，但将其物理锁定在 <code>.stupidClaw/</code> 工作区内，防止大模型删库跑路。</p>
+            </div>
+
+            <div class="card">
+                <div class="card-icon-wrapper">📝</div>
+                <h3>透明的纯文本记忆</h3>
+                <p>没有黑盒。AI 的长期记忆和用户画像全部以 <code>profile.md</code> 和 JSONL 格式落盘保存。你可以随时使用 VS Code 查阅甚至直接手动篡改大模型的记忆。</p>
+            </div>
+
+            <div class="card">
+                <div class="card-icon-wrapper">⏰</div>
+                <h3>主动式 Cron 生物钟</h3>
+                <p>不再“拨一拨动一动”。通过极简的 <code>cron_jobs.json</code>，AI 可以每天早上按时醒来，自主调用搜素技能阅读新闻，并主动通过 IM 推送给你。</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Keep It Simple, Stupid. 拒绝过度工程化。</p>
+        <p style="margin-top: 0.5rem; color: #555;">© 2026 StupidClaw Open Source Project</p>
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StupidIM - Web Client</title>
+  <style>
+    :root {
+      --primary-color: #007AFF;
+      --bg-color: #f5f5f7;
+      --chat-bg: #ffffff;
+      --text-color: #1d1d1f;
+      --border-color: #d2d2d7;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 600px;
+      height: 100vh;
+      max-height: 800px;
+      background: var(--chat-bg);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    @media (min-width: 600px) {
+      .app-container {
+        height: 90vh;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+    }
+
+    .header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .header h1 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .status {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 12px;
+      background: #e5e5ea;
+      color: #86868b;
+    }
+    .status.connected {
+      background: #e8f5e9;
+      color: #34c759;
+    }
+    .status.error {
+      background: #ffebee;
+      color: #ff3b30;
+    }
+
+    .chat-window {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: var(--bg-color);
+    }
+
+    .message {
+      display: flex;
+      flex-direction: column;
+      max-width: 80%;
+    }
+
+    .message.user {
+      align-self: flex-end;
+    }
+    .message.bot {
+      align-self: flex-start;
+    }
+
+    .bubble {
+      padding: 12px 16px;
+      border-radius: 18px;
+      font-size: 15px;
+      line-height: 1.4;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
+
+    .message.user .bubble {
+      background: var(--primary-color);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.bot .bubble {
+      background: white;
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      border-bottom-left-radius: 4px;
+    }
+
+    .typing-indicator {
+      align-self: flex-start;
+      font-size: 13px;
+      color: #86868b;
+      margin-top: -8px;
+      margin-left: 8px;
+      display: none;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .typing-indicator.active {
+      display: flex;
+    }
+
+    .dot {
+      width: 4px;
+      height: 4px;
+      background: #86868b;
+      border-radius: 50%;
+      animation: blink 1.4s infinite both;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes blink {
+      0%, 80%, 100% { opacity: 0.2; }
+      40% { opacity: 1; }
+    }
+
+    .input-area {
+      padding: 16px 20px;
+      background: white;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      gap: 12px;
+    }
+
+    .input-area input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-area input:focus {
+      border-color: var(--primary-color);
+    }
+
+    .input-area button {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 0 20px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .input-area button:hover {
+      opacity: 0.9;
+    }
+    .input-area button:disabled {
+      background: #d2d2d7;
+      cursor: not-allowed;
+    }
+
+    .setup-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--chat-bg);
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .setup-overlay h2 {
+      margin-bottom: 24px;
+    }
+    
+    .setup-overlay input {
+      width: 100%;
+      max-width: 300px;
+      padding: 12px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    .setup-overlay button {
+      width: 100%;
+      max-width: 300px;
+      padding: 12px;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- 登录配置层 -->
+    <div id="setupOverlay" class="setup-overlay">
+      <h2>连接到 StupidIM</h2>
+      <input type="text" id="wsUrlInput" placeholder="ws://localhost:8080" value="ws://localhost:8080">
+      <input type="password" id="tokenInput" placeholder="输入 Token (例如 my_super_secret_token)">
+      <input type="text" id="chatIdInput" placeholder="输入 ChatID (可选，默认随机)">
+      <button id="connectBtn">连接</button>
+      <div id="setupError" style="color: #ff3b30; margin-top: 16px; font-size: 14px;"></div>
+    </div>
+
+    <!-- 聊天主界面 -->
+    <div class="header">
+      <h1>StupidClaw</h1>
+      <span id="statusIndicator" class="status">未连接</span>
+    </div>
+
+    <div id="chatWindow" class="chat-window">
+      <!-- 消息会插入到这里 -->
+      <div class="message bot">
+        <div class="bubble">你好！我是 StupidClaw。连接成功后我们就可以聊天了。</div>
+      </div>
+    </div>
+
+    <div id="typingIndicator" class="typing-indicator">
+      StupidClaw 正在输入 <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+
+    <div class="input-area">
+      <input type="text" id="messageInput" placeholder="输入消息..." disabled autocomplete="off">
+      <button id="sendBtn" disabled>发送</button>
+    </div>
+  </div>
+
+  <script>
+    let ws = null;
+    let typingTimeout = null;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    const setupOverlay = document.getElementById('setupOverlay');
+    const wsUrlInput = document.getElementById('wsUrlInput');
+    const tokenInput = document.getElementById('tokenInput');
+    const chatIdInput = document.getElementById('chatIdInput');
+    const connectBtn = document.getElementById('connectBtn');
+    const setupError = document.getElementById('setupError');
+
+    // 解析 URL 参数填入默认值
+    const paramToken = urlParams.get('token');
+    if (paramToken) tokenInput.value = paramToken;
+    const paramUrl = urlParams.get('url');
+    if (paramUrl) wsUrlInput.value = paramUrl;
+    const paramChatId = urlParams.get('chatId');
+    if (paramChatId) chatIdInput.value = paramChatId;
+
+    const statusIndicator = document.getElementById('statusIndicator');
+    const chatWindow = document.getElementById('chatWindow');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const typingIndicator = document.getElementById('typingIndicator');
+
+    function generateId() {
+      return 'user_' + Math.random().toString(36).substring(2, 9);
+    }
+
+    function addMessage(text, sender) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `message ${sender}`;
+      
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.textContent = text;
+      
+      msgDiv.appendChild(bubble);
+      chatWindow.appendChild(msgDiv);
+      scrollToBottom();
+    }
+
+    function scrollToBottom() {
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    function showTyping() {
+      typingIndicator.classList.add('active');
+      scrollToBottom();
+      
+      // 如果5秒内没有新消息，自动隐藏typing
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(hideTyping, 5000);
+    }
+
+    function hideTyping() {
+      typingIndicator.classList.remove('active');
+      clearTimeout(typingTimeout);
+    }
+
+    connectBtn.addEventListener('click', () => {
+      const baseUrl = wsUrlInput.value.trim();
+      const token = tokenInput.value.trim();
+      let chatId = chatIdInput.value.trim();
+
+      if (!baseUrl || !token) {
+        setupError.textContent = "URL 和 Token 不能为空";
+        return;
+      }
+
+      if (!chatId) {
+        chatId = generateId();
+      }
+
+      setupError.textContent = "连接中...";
+      connectBtn.disabled = true;
+
+      // 建立带参数的WebSocket连接
+      const url = new URL(baseUrl);
+      url.searchParams.set('token', token);
+      url.searchParams.set('chatId', chatId);
+
+      ws = new WebSocket(url.toString());
+
+      ws.onopen = () => {
+        setupOverlay.style.display = 'none';
+        statusIndicator.textContent = "已连接";
+        statusIndicator.className = "status connected";
+        messageInput.disabled = false;
+        sendBtn.disabled = false;
+        messageInput.focus();
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'action' && data.action === 'typing') {
+            showTyping();
+          } else if (data.type === 'message') {
+            hideTyping();
+            addMessage(data.text, 'bot');
+          }
+        } catch(e) {
+          console.error("无法解析消息:", event.data);
+        }
+      };
+
+      ws.onerror = (error) => {
+        setupError.textContent = "连接失败，请检查服务是否启动及 Token 是否正确。";
+        connectBtn.disabled = false;
+        statusIndicator.textContent = "错误";
+        statusIndicator.className = "status error";
+      };
+
+      ws.onclose = (e) => {
+        if (e.code === 4001) {
+          setupError.textContent = "认证失败：Token 错误 (4001)";
+        } else {
+          setupError.textContent = `连接断开 (Code: ${e.code})`;
+        }
+        setupOverlay.style.display = 'flex';
+        connectBtn.disabled = false;
+        statusIndicator.textContent = "断开";
+        statusIndicator.className = "status error";
+        messageInput.disabled = true;
+        sendBtn.disabled = true;
+      };
+    });
+
+    function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+
+      addMessage(text, 'user');
+      ws.send(text);
+      messageInput.value = '';
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+
+  </script>
+</body>
+</html>

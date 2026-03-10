@@ -9,6 +9,8 @@ export interface GatewayOptions<TPayload> {
   path: string;
   secretToken?: string;
   onPayload: (payload: TPayload) => Promise<void>;
+  onServerCreated?: (server: import("node:http").Server) => void;
+  onGet?: (req: NodeIncomingMessage, res: ServerResponse) => boolean;
 }
 
 function readRawBody(req: NodeIncomingMessage): Promise<string> {
@@ -28,6 +30,13 @@ export async function startGateway<TPayload>(
   const server = createServer(
     async (req: NodeIncomingMessage, res: ServerResponse) => {
     const pathname = new URL(req.url ?? "/", "http://localhost").pathname;
+    
+    if (req.method === "GET" && options.onGet) {
+      if (options.onGet(req, res)) {
+        return;
+      }
+    }
+
     if (req.method !== "POST" || pathname !== options.path) {
       res.writeHead(404);
       res.end("Not Found");
@@ -55,6 +64,10 @@ export async function startGateway<TPayload>(
     }
     }
   );
+
+  if (options.onServerCreated) {
+    options.onServerCreated(server);
+  }
 
   await new Promise<void>((resolve, reject) => {
     server.once("error", reject);

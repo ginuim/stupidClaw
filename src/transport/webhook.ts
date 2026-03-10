@@ -1,5 +1,6 @@
 import { startGateway } from "../gateway";
-import type { IncomingMessage, MessageHandler } from "./index";
+import type { MessageHandler } from "./index";
+import { sendMessage, sendChatAction } from "./polling";
 
 interface TelegramUpdate {
   update_id: number;
@@ -13,19 +14,6 @@ const TELEGRAM_API_BASE = "https://api.telegram.org";
 
 function buildApiUrl(token: string, method: string): string {
   return `${TELEGRAM_API_BASE}/bot${token}/${method}`;
-}
-
-function mapUpdateToMessage(update: TelegramUpdate): IncomingMessage | null {
-  const text = update.message?.text?.trim();
-  const chatId = update.message?.chat?.id;
-  if (!text || chatId === undefined) {
-    return null;
-  }
-  return {
-    updateId: update.update_id,
-    chatId: String(chatId),
-    text
-  };
 }
 
 async function setWebhook(
@@ -48,6 +36,8 @@ async function setWebhook(
   }
 }
 
+import { startStupidIM, handleStupidIMRequest } from "./stupid-im";
+
 export async function runWebhookMode(
   token: string,
   onMessage: MessageHandler
@@ -69,10 +59,26 @@ export async function runWebhookMode(
     port,
     path: gatewayPath,
     secretToken,
+    onGet: (req, res) => {
+      return handleStupidIMRequest(req, res);
+    },
+    onServerCreated: (server) => {
+      const imToken = process.env.STUPID_IM_TOKEN;
+      if (imToken) {
+        startStupidIM(imToken, onMessage, server);
+      }
+    },
     onPayload: async (payload) => {
-      const message = mapUpdateToMessage(payload);
-      if (message) {
-        await onMessage(message);
+      const text = payload.message?.text?.trim();
+      const chatId = payload.message?.chat?.id;
+      if (text && chatId !== undefined) {
+        await onMessage({
+          updateId: payload.update_id,
+          chatId: String(chatId),
+          text,
+          reply: (replyText) => sendMessage(token, String(chatId), replyText),
+          sendChatAction: () => sendChatAction(token, String(chatId))
+        });
       }
     }
   });
