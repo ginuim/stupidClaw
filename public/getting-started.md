@@ -18,13 +18,18 @@ StupidClaw 默认依赖两个外部服务：**Telegram**（作为主要交互界
 3. 按照提示，给你的机器人起一个**名字（Name）**（任意，可重复）和一个**用户名（Username）**（必须以 `bot` 结尾，不可重复，如 `MyStupidClaw_bot`）。
 4. 创建成功后，BotFather 会回复你一段包含 `Token` 的消息（类似 `123456789:ABCdefGHIjklmNOPqrsTUVwxyz`）。请妥善保存这串字符，这就是你的 `TELEGRAM_BOT_TOKEN`。
 
-### 2. 获取 MiniMax API Key
-StupidClaw 默认使用 MiniMax 的 `MiniMax-M2.5` 模型。
-1. 访问 [MiniMax 开放平台](https://platform.minimaxi.com/) 并注册账号。
-2. 登录后，进入左侧菜单的“账户管理” -> “API Key”。
-3. 点击“创建 API Key”，复制生成的字符串，这就是你的 `MINIMAX_API_KEY`。
+### 2. 获取大语言模型 API Key
 
-*(注：如果你想换成其他兼容的模型，可自行在代码 `src/engine.ts` 中调整配置。)*
+StupidClaw 支持多种模型供应商，你只需要至少配置一个即可启动：
+
+- **MiniMax（默认推荐）**: 对中文支持极佳。在 [MiniMax 开放平台](https://platform.minimaxi.com/) 获取 `MINIMAX_API_KEY`。
+- **OpenAI**: 在 [OpenAI Platform](https://platform.openai.com/) 获取 `OPENAI_API_KEY`。
+- **Anthropic**: 在 [Anthropic Console](https://console.anthropic.com/) 获取 `ANTHROPIC_API_KEY`。
+- **Groq**: 速度极快，有免费额度。在 [Groq Console](https://console.groq.com/) 获取 `GROQ_API_KEY`。
+- **OpenRouter**: 一个 Key 接入几乎所有模型（含 DeepSeek）。在 [OpenRouter](https://openrouter.ai/) 获取 `OPENROUTER_API_KEY`。
+- **本地模型**: 支持 Ollama、LM Studio、vLLM 等本地部署，需要额外配置。
+
+完整的供应商列表和本地模型配置方法，见 [模型配置指南](models.md)。
 
 ---
 
@@ -46,21 +51,25 @@ pnpm install
 cp .env.example .env
 ```
 
-打开刚刚复制出来的 `.env` 文件，填入你刚才获取的凭证：
+打开 `.env` 文件，至少填写两项：一是 `STUPID_MODEL`（选择模型），二是对应供应商的 API Key。
+
+**格式：`STUPID_MODEL=provider:model_id`**
 
 ```dotenv
-MINIMAX_API_KEY=在这里填入你的MiniMax_API_Key
-MINIMAX_MODEL=MiniMax-M2.5
+# 默认配置（使用 MiniMax）
+STUPID_MODEL=minimax:MiniMax-M2.5
+MINIMAX_API_KEY=在这里填入你的 API Key
 
-# 如果你不用 Telegram，可以随便填或者留空
-TELEGRAM_BOT_TOKEN=在这里填入你的Telegram_Token
-TELEGRAM_MODE=polling
+# 或者换成 OpenAI
+# STUPID_MODEL=openai:gpt-4o
+# OPENAI_API_KEY=sk-xxxx
 
-# StupidIM (网页端) 配置
-STUPID_IM_TOKEN=在这里填入你想设置的密码凭证(例如: my_super_secret)
-STUPID_IM_PORT=8080
-STUPID_IM_CHAT_ID=my_test_chat_id
+# 或者换成 Groq（免费额度）
+# STUPID_MODEL=groq:llama-3.3-70b-versatile
+# GROQ_API_KEY=gsk_xxxx
 ```
+
+更多配置选项（含所有 provider 列表、DeepSeek 接入方法、本地模型配置），见 [模型配置指南](models.md)。
 
 ---
 

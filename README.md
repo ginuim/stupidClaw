@@ -1,9 +1,16 @@
 # StupidClaw
 
 回归纯粹的极简本地 Agent：  
-基于 `pi-mono` 底座。严格限制在指定目录，以纯文本格式读写记忆。没有数据库的黑魔法，只有你能完全掌控的代码。
+基于 `pi-mono` 底座。业余时间开发，主要用于简单代码学习交流使用，欢迎反馈。  
+严格限制在指定目录，以纯文本格式读写记忆。没有数据库的黑魔法，只有你能完全掌控的代码。
 
 ## 官方网站：[stupidClaw](https://stupidclaw.reaidea.com)
+
+## 相关文档
+
+- [快速上手指南](public/getting-started.md)
+- [模型配置指南](public/models.md)
+- [常见故障排查](public/troubleshooting.md)
 
 ## 项目边界
 
@@ -63,8 +70,9 @@ cp .env.example .env
 ```
 
 至少填写：
+- `STUPID_MODEL` (模型选择，如 `minimax:MiniMax-M2.5` 或 `openai:gpt-4o`)
+- 对应供应商的 API Key (如 `MINIMAX_API_KEY` 或 `OPENAI_API_KEY`)
 - `TELEGRAM_BOT_TOKEN` (如果你使用网页端 IM，可以随便填)
-- `MINIMAX_API_KEY`（不填会走本地回显 fallback）
 
 3. 启动
 

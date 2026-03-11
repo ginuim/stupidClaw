@@ -2,7 +2,7 @@
 
 每次修改或开发代码后需更新本文件，勾选已完成项。
 
-当前开发分支：`phase-8-stupid-im`
+当前开发分支：`phase-9-flexible-model`
 
 ## 全局硬约束（必须满足）
 
@@ -123,4 +123,17 @@
 - [x] 网页端：创建 `public/im.html` 作为独立的 IM 客户端
 - [x] 体验：提供 npm run im 命令快速打开网页端并自动填充 Token 与参数
 - [x] 优化：Landing Page 及 README / getting-started / 教程规划等 md 文案统一为「回归纯粹」
+- [x] 优化：README 文档，完善链接与项目说明
 - [ ] 撰写第 8 期教程文章
+
+---
+
+## 第 9 期：多模型支持与配置优化
+
+- [x] 重构 `src/engine.ts`：从 `pickMiniMaxModel` 到更通用的 `pickModel`
+- [x] 支持 `STUPID_MODEL=provider:model_id` 格式配置
+- [x] 更新 `.env.example`：列出所有内置 provider，注释说明本地模型配置方式
+- [x] 新增 `public/models.md`：完整模型配置指南，含供应商列表、本地模型、OpenAI/Anthropic 兼容配置
+- [x] 更新 `public/getting-started.md`：简化模型配置说明，指向 models.md
+- [x] 验收：支持 MiniMax、OpenAI、Groq 等模型切换
+- [ ] 撰写第 9 期教程文章

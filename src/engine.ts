@@ -148,33 +148,45 @@ function buildStaticSystemPrompt(fileSkillsPrompt: string): string {
   return lines.join("\n");
 }
 
-function pickMiniMaxModel(modelRegistry: ModelRegistry) {
-  const preferredModelId = process.env.MINIMAX_MODEL;
+function pickModel(modelRegistry: ModelRegistry) {
+  const config = process.env.STUPID_MODEL || process.env.MINIMAX_MODEL;
   const available = modelRegistry.getAvailable();
-  const minimaxAvailable = available.filter((model) =>
-    ["minimax", "minimax-cn"].includes(model.provider)
-  );
 
-  if (preferredModelId) {
-    const preferred =
-      modelRegistry.find("minimax-cn", preferredModelId) ||
-      modelRegistry.find("minimax", preferredModelId);
-    if (preferred) {
-      debugLog(`selected preferred model=${preferred.provider}/${preferred.id}`);
-      return preferred;
+  if (config) {
+    // 支持 provider:model_id 格式，也兼容旧的直接 model_id 格式（默认为 minimax-cn/minimax）
+    if (config.includes(":")) {
+      const [provider, id] = config.split(":");
+      const found = modelRegistry.find(provider, id);
+      if (found) {
+        debugLog(`selected model from config: ${provider}/${id}`);
+        return found;
+      }
+      debugLog(`model not found in registry: ${config}`);
+    } else {
+      // 兼容旧逻辑：如果是纯 model_id，尝试在 minimax 家族里找
+      const found =
+        modelRegistry.find("minimax-cn", config) ||
+        modelRegistry.find("minimax", config);
+      if (found) {
+        debugLog(`selected preferred minimax model=${found.provider}/${found.id}`);
+        return found;
+      }
     }
-    debugLog(`preferred model not found: ${preferredModelId}`);
   }
 
+  // 默认兜底：优先找 minimax-cn，找不到就用第一个可用的
   return (
-    minimaxAvailable.find((model) => model.provider === "minimax-cn") ??
-    minimaxAvailable.find((model) => model.provider === "minimax") ??
+    modelRegistry.find("minimax-cn", "MiniMax-M2.5") ??
+    available.find((m) => m.provider === "minimax-cn") ??
+    available.find((m) => m.provider === "minimax") ??
     available[0]
   );
 }
 
 function createAuthStorage(): AuthStorage {
   const authStorage = AuthStorage.create();
+  // pi-mono 默认会自动读取 OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY 等
+  // 我们保留对 MiniMax 这种需要特殊映射的逻辑（如果只填了 MINIMAX_API_KEY）
   if (process.env.MINIMAX_API_KEY && !process.env.MINIMAX_CN_API_KEY) {
     authStorage.setRuntimeApiKey("minimax-cn", process.env.MINIMAX_API_KEY);
     debugLog("MINIMAX_CN_API_KEY missing; reuse MINIMAX_API_KEY for minimax-cn");
@@ -183,17 +195,12 @@ function createAuthStorage(): AuthStorage {
 }
 
 async function createChatSession(chatId: string): Promise<ChatSession | null> {
-  if (!process.env.MINIMAX_API_KEY && !process.env.MINIMAX_CN_API_KEY) {
-    debugLog("createChatSession skipped: MINIMAX_API_KEY and MINIMAX_CN_API_KEY missing");
-    return null;
-  }
-
   const authStorage = createAuthStorage();
   const modelRegistry = new ModelRegistry(authStorage);
-  const model = pickMiniMaxModel(modelRegistry);
+  const model = pickModel(modelRegistry);
 
   if (!model) {
-    debugLog("createChatSession failed: no model available");
+    debugLog("createChatSession failed: no model available. Please check your API keys in .env");
     return null;
   }
 
@@ -204,13 +211,11 @@ async function createChatSession(chatId: string): Promise<ChatSession | null> {
       JSON.stringify(
         {
           telegramMode: process.env.TELEGRAM_MODE ?? "polling",
-          minimaxModelEnv: process.env.MINIMAX_MODEL ?? "(empty)",
+          stupidModelEnv: process.env.STUPID_MODEL ?? "(empty)",
           selectedProvider: model.provider,
           selectedModelId: model.id,
           selectedBaseUrl: model.baseUrl,
           workspaceRoot: WORKSPACE_ROOT,
-          minimaxApiKeyMasked: maskSecret(process.env.MINIMAX_API_KEY),
-          minimaxCnApiKeyMasked: maskSecret(process.env.MINIMAX_CN_API_KEY),
           debugEnabled: DEBUG_ENGINE
         },
         null,
@@ -420,8 +425,8 @@ function extractLatestAssistantError(session: AgentSession): string {
       continue;
     }
     if (typeof message.errorMessage === "string" && message.errorMessage.trim()) {
-      if (message.errorMessage.includes("invalid api key")) {
-        return "MiniMax API Key 无效（invalid api key），请检查并更换 .env 中 MINIMAX_API_KEY。";
+      if (message.errorMessage.toLowerCase().includes("api key")) {
+        return "API Key 无效或未配置，请检查并更换 .env 中的相关配置。";
       }
       return message.errorMessage;
     }
