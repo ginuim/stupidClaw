@@ -365,15 +365,16 @@
                 </div>
                 <div class="terminal-body">
                     <div class="comment"># 告别繁琐的 Webhook 配置，WebSocket 本地极速启动</div>
-                    <div><span class="prompt"></span>git clone https://github.com/your-repo/stupidClaw</div>
+                    <div><span class="prompt"></span>git clone https://github.com/ginum/stupidClaw</div>
                     <div><span class="prompt"></span>cd stupidClaw && pnpm install</div>
                     <div><span class="prompt"></span>cp .env.example .env</div>
                     <br>
-                    <div><span class="prompt"></span>pnpm run dev --mode=websocket</div>
-                    <div class="info">[INFO]  Engine: pi-mono core initialized.</div>
-                    <div class="info">[INFO]  Memory: Local .stupidClaw/ workspace mounted.</div>
-                    <div class="success">[READY] StupidClaw WebSocket server running on ws://localhost:3000</div>
-                    <div class="success">[READY] Open http://localhost:3000 in browser to start chatting!</div>
+                    <div><span class="prompt"></span>pnpm run dev</div>
+                    <div class="info">[INFO] Memory: Local .stupidClaw/ workspace mounted.</div>
+                    <div class="info">[INFO] StupidIM web client started! Hold Command/Ctrl and click the link below:</div>
+                    <div class="info">[INFO] http://localhost:8080/?token=my_super_secret_token&chatId=chatId&url=ws%3A%2F%2Flocalhost%3A8080</div>
+                    <div class="success">[boot] StupidClaw Telegram polling started</div>
+                    <div class="success">[boot] StupidIM HTTP Server started on port 8080</div>
                     <span style="animation: pulse 1s infinite;">_</span>
                 </div>
             </div>
@@ -396,8 +397,8 @@
 
             <div class="card">
                 <div class="card-icon-wrapper">⚡️</div>
-                <h3>WebSocket 极速接入</h3>
-                <p>想快速测试功能，不想被 Telegram 代理卡住？内置 WebSocket 极简通信层，启动即附带本地测试页，聊爽了再一键切换至 Telegram。</p>
+                <h3>StupidIM</h3>
+                <p>想快速接入对话？内置 WebSocket 极简通信层，启动即附带本地测试页，聊爽了再一键切换至 Telegram。</p>
             </div>
 
             <div class="card">

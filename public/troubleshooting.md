@@ -50,6 +50,41 @@ DEBUG_STUPIDCLAW=1 pnpm dev
 
 ---
 
+## Telegram Polling 报错 HTTP 409
+
+**现象**：
+
+```
+[error] telegram polling failed: getUpdates failed: HTTP 409
+```
+
+**原因**：Telegram 规定同一 Bot 在同一时刻只能有一个 `getUpdates` 长轮询连接。409 Conflict 表示已有别的客户端在拉取该 Bot 的更新。
+
+**常见场景：**
+
+1. **多实例同时跑**：同一个 token 在多个终端、多台机器、或本机 + 服务器上同时跑 `pnpm dev`。
+2. **Webhook 未清除**：Bot 已注册 Webhook，但你又用 Polling 模式启动。Telegram 会把更新推给 Webhook，Polling 拿不到，可能触发冲突。
+3. **残留进程**：上次 `pnpm dev` 没正常退出，进程仍在后台运行，新的实例与之冲突。
+
+**解法：**
+
+1. 只保留一个 Polling 实例，关掉其余终端/进程。
+2. 若曾用过 Webhook，切回 Polling 时会自动 `deleteWebhook`；若仍有问题，手动清除：
+
+   ```bash
+   curl "https://api.telegram.org/bot<TOKEN>/deleteWebhook"
+   ```
+
+3. 查杀残留进程：
+
+   ```bash
+   pkill -f "tsx src/index.ts"
+   # 或按 PID
+   kill <pid>
+   ```
+
+---
+
 ## Webhook 模式收不到消息
 
 Webhook 需要公网 HTTPS 地址。本地开发建议优先用 Polling 模式（`TELEGRAM_MODE=polling`）。
