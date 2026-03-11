@@ -334,7 +334,7 @@ export function resolveSafePath(targetPath: string): string {
   - `cron_run` 历史落盘
 
 ### 13.8 第 7 期（发布）
-- 结构：`README.md`、`.env.example`、`public/troubleshooting.md`。
+- 结构：`README.md`、`.env.example`、`docs/troubleshooting.md`。
 - 关键代码：
   - 启动命令与配置校验
   - 可选 `bun build --compile` 单文件构建

@@ -105,13 +105,13 @@
 - [x] README.md（5 分钟启动）
 - [x] .env.example
 - [x] Telegram 消息发送优化：markdown→HTML 渲染、typing indicator、超长消息切片
-- [x] `public/troubleshooting.md` 常见故障排查文档
-- [x] `public/getting-started.md` 快速上手指南
+- [x] `docs/troubleshooting.md` 常见故障排查文档
+- [x] `docs/getting-started.md` 快速上手指南
 - [x] 第 7 期教程文章：`StupidClaw-第7期-发布与工程收口.md`
 - [x] 优化：identity + file_skills 移入 system prompt，每轮 prompt 只传 runtime_context + profile + user_message
 - [x] 修复：剥除回复中的 <think>...</think> 标签
 - [x] 修复：typing indicator 持续刷新（每 4 秒），直到回复完成
-- [x] 新增：制作并发布 `public/index.html` 项目介绍 Landing Page，集成文档中心入口
+- [x] 新增：制作并发布 `docs/index.html` 项目介绍 Landing Page，集成文档中心入口
 - [ ] 验收：新读者 clone 到跑通不超过 15 分钟
 
 ---
@@ -134,8 +134,8 @@
 - [x] 重构 `src/engine.ts`：从 `pickMiniMaxModel` 到更通用的 `pickModel`
 - [x] 支持 `STUPID_MODEL=provider:model_id` 格式配置
 - [x] 更新 `.env.example`：列出所有内置 provider，注释说明本地模型配置方式
-- [x] 新增 `public/models.md`：完整模型配置指南，含供应商列表、本地模型、OpenAI/Anthropic 兼容配置
-- [x] 更新 `public/getting-started.md`：简化模型配置说明，指向 models.md
+- [x] 新增 `docs/models.md`：完整模型配置指南，含供应商列表、本地模型、OpenAI/Anthropic 兼容配置
+- [x] 更新 `docs/getting-started.md`：简化模型配置说明，指向 models.md
 - [x] 验收：支持 MiniMax、OpenAI、Groq 等模型切换
 - [x] 新增 `ensureWorkspaceDirs()`：启动时统一创建所有 `.stupidClaw` 子目录
 - [ ] 撰写第 9 期教程文章

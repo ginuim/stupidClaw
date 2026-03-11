@@ -104,7 +104,7 @@ pnpm dev
 [boot] StupidClaw Telegram polling started
 ```
 
-此时，如果你配置了 Telegram，你可以直接在 Telegram 里搜索你创建的那个机器人的 Username，点击“Start”，跟它打个招呼，它就会回复你了！
+此时，如果你配置了 Telegram，你可以直接在 Telegram 里搜索你创建的那个机器人的 Username，点击"Start"，跟它打个招呼，它就会回复你了！
 
 ---
 
@@ -126,7 +126,7 @@ http://localhost:8080/?token=my_super_secret_token&chatId=my_test_chat_id&url=ws
 你只需要：
 1. **按住键盘的 `Command` (macOS) 或 `Ctrl` (Windows)**。
 2. **用鼠标点击终端中这段蓝色的链接**，或者手动复制粘贴到浏览器打开。
-3. 网页打开后会自动填充好各项配置，直接点击界面上的 **“连接”** 按钮。
+3. 网页打开后会自动填充好各项配置，直接点击界面上的 **"连接"** 按钮。
 4. 连接成功后右上角会显示绿色状态，现在你就可以像使用微信一样，在网页端直接和 StupidClaw 对话了！
 
 ---

@@ -8,9 +8,9 @@
 
 ## 相关文档
 
-- [快速上手指南](public/getting-started.md)
-- [模型配置指南](public/models.md)
-- [常见故障排查](public/troubleshooting.md)
+- [快速上手指南](docs/getting-started.md)
+- [模型配置指南](docs/models.md)
+- [常见故障排查](docs/troubleshooting.md)
 
 ## 项目边界
 
@@ -53,7 +53,7 @@ stupidClaw/
 
 ## 5 分钟启动
 
-详见完整的 [快速上手指南](public/getting-started.md) 获取详细的步骤（包括如何申请 Telegram Bot Token 和 API Key 等，以及如何使用内置网页端 IM）。
+详见完整的 [快速上手指南](docs/getting-started.md) 获取详细的步骤（包括如何申请 Telegram Bot Token 和 API Key 等，以及如何使用内置网页端 IM）。
 
 ### 方式 A：最快启动 (npx)
 

@@ -22,7 +22,7 @@
 ```text
 README.md               # 5 分钟启动指南（第 1 期已有，补全细节）
 .env.example            # 完整环境变量模板
-public/troubleshooting.md # 常见故障排查
+docs/troubleshooting.md # 常见故障排查
 ```
 
 不需要加新代码，只需要把文档补齐。
@@ -95,7 +95,7 @@ DEBUG_PROMPT=1
 
 ## 故障排查文档结构
 
-`public/troubleshooting.md` 按真实故障场景组织，不按模块。每个场景格式：
+`docs/troubleshooting.md` 按真实故障场景组织，不按模块。每个场景格式：
 
 1. 现象（报错信息或行为描述）
 2. 原因
@@ -150,7 +150,7 @@ curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 
 - [ ] `git clone` 后按 README 操作，不超过 15 分钟跑通
 - [ ] `.env.example` 包含所有必要变量且有说明注释
-- [ ] `public/troubleshooting.md` 覆盖启动失败、Bot 无回复、Webhook 故障、Cron 不触发四个场景
+- [ ] `docs/troubleshooting.md` 覆盖启动失败、Bot 无回复、Webhook 故障、Cron 不触发四个场景
 - [ ] 新读者不需要看源码就能排查常见问题
 
 ---

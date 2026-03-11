@@ -163,7 +163,7 @@
 
 项目结构：
 - `README.md`（发刊词版）
-- `public/architecture.md`（可选，放架构图与边界）
+- `docs/architecture.md`（可选，放架构图与边界）
 
 关键代码：
 - 无代码实现，重点是边界定义与目录草图。
@@ -246,7 +246,7 @@
 项目结构：
 - `README.md`
 - `.env.example`
-- `public/troubleshooting.md`
+- `docs/troubleshooting.md`
 
 关键代码：
 - `pnpm install` + `pnpm dev` 一键跑通命令。
