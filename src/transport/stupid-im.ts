@@ -30,7 +30,7 @@ export function startStupidIM(
     console.log(`[boot] StupidIM attached to existing HTTP server`);
     baseUrl = `http://localhost:${process.env.PORT || "8787"}`;
   } else {
-    const port = Number(process.env.STUPID_IM_PORT ?? "8080");
+    const port = Number(process.env.PORT ?? "8787");
     const httpServer = createServer((req, res) => {
       if (!handleStupidIMRequest(req, res)) {
         res.writeHead(404);

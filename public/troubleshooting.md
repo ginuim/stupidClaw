@@ -179,6 +179,6 @@ Profile 保存在 `.stupidClaw/profile.md`，该文件不在 git 追踪范围内
 | `TELEGRAM_WEBHOOK_URL` | Webhook 时必填 | 公网 HTTPS 回调地址 |
 | `TELEGRAM_WEBHOOK_SECRET` | 否 | Webhook 请求验签密钥 |
 | `TELEGRAM_WEBHOOK_PATH` | 否 | 默认 `/telegram/webhook` |
-| `PORT` | 否 | Webhook 监听端口，默认 `8787` |
+| `PORT` | 否 | Webhook 主服务端口 / Polling 时 StupidIM 端口，默认 `8787` |
 | `DEBUG_STUPIDCLAW` | 否 | 设为 `1` 开启引擎调试日志 |
 | `DEBUG_PROMPT` | 否 | 设为 `1` 打印每次发给模型的完整 prompt |

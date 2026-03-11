@@ -120,6 +120,7 @@
 
 - [x] 新增：支持基于 WebSocket 的简易 IM（StupidIM）及其凭证校验
 - [x] 优化：HTTP 与 WebSocket 端口复用
+- [x] 优化：移除 STUPID_IM_PORT，统一使用 PORT（Webhook/Polling 均用同一端口）
 - [x] 网页端：创建 `public/im.html` 作为独立的 IM 客户端
 - [x] 体验：提供 npm run im 命令快速打开网页端并自动填充 Token 与参数
 - [x] 优化：Landing Page 及 README / getting-started / 教程规划等 md 文案统一为「回归纯粹」
