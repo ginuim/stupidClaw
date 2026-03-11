@@ -139,3 +139,15 @@
 - [x] 验收：支持 MiniMax、OpenAI、Groq 等模型切换
 - [x] 新增 `ensureWorkspaceDirs()`：启动时统一创建所有 `.stupidClaw` 子目录
 - [ ] 撰写第 9 期教程文章
+
+---
+
+## 第 10 期：更高级的分发方式 (NPX & CLI)
+
+- [x] 分支：`phase-9-npx-support` (当前分支)
+- [x] 支持 `npx stupid-claw` 一键运行 (配置 bin)
+- [x] 支持通过 `--config` 指定配置文件，或默认从 `process.cwd()` 加载
+- [x] 优化入口文件，增加 Shebang 和错误引导（如未检测到 .env）
+- [x] 支持 `pnpm build` 将项目编译为独立的 JS 文件用于 CLI 分发
+- [x] 更新 `README.md` 和 `getting-started.md` 说明新的安装/运行方式
+- [ ] 验收：在空目录下执行 `npx` 或运行编译后的 JS 能正常引导或报错提示

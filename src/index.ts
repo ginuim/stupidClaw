@@ -1,11 +1,34 @@
-import "dotenv/config";
+#!/usr/bin/env node
+
 import fs from "node:fs";
 import path from "node:path";
+import dotenv from "dotenv";
 import { startCronScheduler } from "./cron";
 import { chat } from "./engine";
 import { ensureWorkspaceDirs } from "./memory/workspace-path";
 import { createSkillRegistry } from "./skills/registry";
 import { startTransport } from "./transport";
+
+// 解析命令行参数，支持 --config 指定 .env 路径
+const args = process.argv.slice(2);
+const configIdx = args.indexOf("--config");
+const configPath =
+  configIdx > -1 && args[configIdx + 1]
+    ? path.resolve(process.cwd(), args[configIdx + 1])
+    : path.resolve(process.cwd(), ".env");
+
+// 显式加载指定的 .env 文件
+if (fs.existsSync(configPath)) {
+  dotenv.config({ path: configPath });
+} else if (configIdx > -1) {
+  // 如果用户指定了但不存在，报错
+  console.error(`[error] 配置文件未找到: ${configPath}`);
+  process.exit(1);
+} else {
+  // 如果默认的 .env 也不存在，给个友好提示，而不是直接崩掉（或者等后面报 Missing Token）
+  console.warn(`[warn] 未检测到 .env 配置文件 (${configPath})，程序可能无法正常工作。`);
+  console.warn(`[hint] 你可以从 .env.example 复制一份或使用 --config 指定。`);
+}
 
 const WORKSPACE_DIR = path.resolve(process.cwd(), ".stupidClaw");
 const LOCK_FILE = path.resolve(WORKSPACE_DIR, "polling.lock");

@@ -55,7 +55,17 @@ stupidClaw/
 
 详见完整的 [快速上手指南](public/getting-started.md) 获取详细的步骤（包括如何申请 Telegram Bot Token 和 API Key 等，以及如何使用内置网页端 IM）。
 
-简要步骤如下：
+### 方式 A：最快启动 (npx)
+
+如果你本地已有 Node.js 环境，无需下载源码，直接在任何目录下运行：
+
+```bash
+npx stupid-claw
+```
+
+首次运行会在当前目录下生成 `.env` 提示，配置完成后再次运行即可。
+
+### 方式 B：源码运行
 
 1. 安装依赖
 
@@ -82,58 +92,3 @@ pnpm dev
 
 如果你想使用内置的免梯子网页端 IM，启动后直接点击终端中输出的绿色链接即可！
 
-## 开发计划（7 期执行版）
-
-### 第 0 期：发刊词与边界
-- 项目结构：`README.md`、目录草图、边界说明。
-- 关键代码：无（只定义边界）。
-
-### 第 1 期：Polling 最小闭环
-- 项目结构：`src/index.ts`、`src/engine.ts`、`src/transport/polling.ts`。
-- 关键代码：
-  - `getUpdates(offset)` 持续拉取
-  - `offset = updateId + 1` 去重
-  - `engine.chat(...) -> sendMessage(...)` 回复链路
-
-### 第 2 期：Webhook 增强
-- 项目结构：`src/gateway.ts`、`src/transport/webhook.ts`、`src/transport/index.ts`。
-- 关键代码：
-  - `TELEGRAM_MODE` 模式分发
-  - Webhook 与 Polling 统一消息结构
-
-### 第 3 期：Skills + History
-- 项目结构：`src/skills/contracts.ts`、`src/skills/registry.ts`、`src/memory/history-store.ts`。
-- 关键代码：
-  - `always` / `on_demand` 渐进式披露
-  - `history/YYYY-MM-DD.jsonl` append-only 写入
-
-### 第 4 期：Profile 长期记忆
-- 项目结构：`src/memory/profile-store.ts`、`src/skills/memory/update_profile.ts`。
-- 关键代码：
-  - 会话前注入 `profile.md`
-  - 按段落更新，不整文件重写
-
-### 第 5 期：Path Jailing
-- 项目结构：`src/memory/workspace-path.ts` + 所有文件类 skills。
-- 关键代码：
-  - `resolveSafePath(targetPath)` 限定 `.stupidClaw/`
-  - 拒绝 `../`、绝对路径、空路径
-
-### 第 6 期：Cron 主动触发
-- 项目结构：`src/cron.ts`、`.stupidClaw/cron_jobs.json`、`src/skills/cron/manage_cron_jobs.ts`。
-- 关键代码：
-  - cron 匹配与调度
-  - 触发 skill 后主动 Telegram 推送
-  - 执行日志落到 history
-
-### 第 7 期：发布收口
-- 项目结构：`README.md`、`.env.example`、`public/troubleshooting.md`。
-- 关键代码：
-  - 最小启动脚本与故障排查
-  - 可选 `bun build --compile` 独立可执行构建
-
-## 约定
-
-- 每期开始前先新建分支：`phase-N` 或 `phase-N-描述`。
-- 每期代码完成后必须同步更新教程文章。
-- 每次改代码后都维护 `DEV_TODO.md`。
