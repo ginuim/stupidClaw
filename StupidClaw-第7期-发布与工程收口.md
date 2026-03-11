@@ -171,4 +171,4 @@ curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 
 总代码量控制在合理范围内，没有引入数据库、没有做复杂 UI、没有用"高级"框架。这不是能力不够，而是刻意为之。
 
-大智若愚。
+回归纯粹。

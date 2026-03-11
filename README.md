@@ -1,7 +1,7 @@
 # StupidClaw
 
-大智若愚的本地 Agent：  
-`pi-mono` + `MiniMax M2.5` + Telegram + 纯文件系统记忆。
+回归纯粹的极简本地 Agent：  
+基于 `pi-mono` 底座。严格限制在指定目录，以纯文本格式读写记忆。没有数据库的黑魔法，只有你能完全掌控的代码。
 
 ## 官方网站：[stupidClaw](https://stupidclaw.reaidea.com)
 

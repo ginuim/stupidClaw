@@ -106,11 +106,12 @@
 - [x] .env.example
 - [x] Telegram 消息发送优化：markdown→HTML 渲染、typing indicator、超长消息切片
 - [x] `public/troubleshooting.md` 常见故障排查文档
+- [x] `public/getting-started.md` 快速上手指南
 - [x] 第 7 期教程文章：`StupidClaw-第7期-发布与工程收口.md`
 - [x] 优化：identity + file_skills 移入 system prompt，每轮 prompt 只传 runtime_context + profile + user_message
 - [x] 修复：剥除回复中的 <think>...</think> 标签
 - [x] 修复：typing indicator 持续刷新（每 4 秒），直到回复完成
-- [x] 新增：制作并发布 public/index.html 项目介绍 Landing Page
+- [x] 新增：制作并发布 `public/index.html` 项目介绍 Landing Page，集成文档中心入口
 - [ ] 验收：新读者 clone 到跑通不超过 15 分钟
 
 ---
@@ -121,4 +122,5 @@
 - [x] 优化：HTTP 与 WebSocket 端口复用
 - [x] 网页端：创建 `public/im.html` 作为独立的 IM 客户端
 - [x] 体验：提供 npm run im 命令快速打开网页端并自动填充 Token 与参数
+- [x] 优化：Landing Page 及 README / getting-started / 教程规划等 md 文案统一为「回归纯粹」
 - [ ] 撰写第 8 期教程文章
