@@ -4,8 +4,8 @@ import {
   readCronJobs,
   writeCronJobs,
   type CronJob
-} from "../../cron/jobs-store";
-import type { SkillDefinition } from "../contracts";
+} from "../../cron/jobs-store.js";
+import type { SkillDefinition } from "../contracts.js";
 
 const ACTIONS = ["list", "add", "update", "remove", "set_enabled"] as const;
 type ManageAction = (typeof ACTIONS)[number];

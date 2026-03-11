@@ -1,5 +1,5 @@
 import { WebSocketServer, type WebSocket } from "ws";
-import type { MessageHandler } from "./index";
+import type { MessageHandler } from "./index.js";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import fs from "node:fs";
 import path from "node:path";

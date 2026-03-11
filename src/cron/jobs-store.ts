@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import { resolveSafePath } from "../memory/workspace-path";
+import { resolveSafePath } from "../memory/workspace-path.js";
 
 export interface CronJob {
   id: string;

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isCronExprMatch } from "../cron";
+import { isCronExprMatch } from "../cron.js";
 
 test("isCronExprMatch: 每天 8 点命中", () => {
   const hit = new Date("2026-03-10T08:00:00");

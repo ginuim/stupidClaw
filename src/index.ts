@@ -3,11 +3,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import dotenv from "dotenv";
-import { startCronScheduler } from "./cron";
-import { chat } from "./engine";
-import { ensureWorkspaceDirs } from "./memory/workspace-path";
-import { createSkillRegistry } from "./skills/registry";
-import { startTransport } from "./transport";
+import { startCronScheduler } from "./cron.js";
+import { chat } from "./engine.js";
+import { ensureWorkspaceDirs } from "./memory/workspace-path.js";
+import { createSkillRegistry } from "./skills/registry.js";
+import { startTransport } from "./transport/index.js";
 
 // 解析命令行参数，支持 --config 指定 .env 路径
 const args = process.argv.slice(2);

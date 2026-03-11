@@ -1,5 +1,5 @@
 import { Type } from "@mariozechner/pi-ai";
-import type { SkillDefinition } from "../contracts";
+import type { SkillDefinition } from "../contracts.js";
 
 export function createGetSystemTimeSkill(): SkillDefinition {
   return {

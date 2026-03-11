@@ -1,8 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { Type } from "@mariozechner/pi-ai";
-import { resolveSafePath } from "../../memory/workspace-path";
-import type { SkillDefinition } from "../contracts";
+import { resolveSafePath } from "../../memory/workspace-path.js";
+import type { SkillDefinition } from "../contracts.js";
 
 const PROJECT_SKILLS_ROOT = resolveSafePath("skills");
 

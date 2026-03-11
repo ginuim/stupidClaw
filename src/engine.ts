@@ -9,12 +9,12 @@ import {
   SessionManager,
   type AgentSession
 } from "@mariozechner/pi-coding-agent";
-import { appendHistoryEvent } from "./memory/history-store";
-import { readProfileMarkdown } from "./memory/profile-store";
-import { resolveSafePath } from "./memory/workspace-path";
-import { IDENTITY_PROMPT_LINES } from "./prompt/identity";
-import { loadStandardFileSkills } from "./skills/file-skills";
-import { createSkillRegistry, type SkillRegistry } from "./skills/registry";
+import { appendHistoryEvent } from "./memory/history-store.js";
+import { readProfileMarkdown } from "./memory/profile-store.js";
+import { resolveSafePath } from "./memory/workspace-path.js";
+import { IDENTITY_PROMPT_LINES } from "./prompt/identity.js";
+import { loadStandardFileSkills } from "./skills/file-skills.js";
+import { createSkillRegistry, type SkillRegistry } from "./skills/registry.js";
 
 export interface ChatInput {
   chatId: string;

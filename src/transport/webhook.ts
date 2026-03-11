@@ -1,6 +1,6 @@
-import { startGateway } from "../gateway";
-import type { MessageHandler } from "./index";
-import { sendMessage, sendChatAction } from "./polling";
+import { startGateway } from "../gateway.js";
+import type { MessageHandler } from "./index.js";
+import { sendMessage, sendChatAction } from "./polling.js";
 
 interface TelegramUpdate {
   update_id: number;
@@ -36,7 +36,7 @@ async function setWebhook(
   }
 }
 
-import { startStupidIM, handleStupidIMRequest } from "./stupid-im";
+import { startStupidIM, handleStupidIMRequest } from "./stupid-im.js";
 
 export async function runWebhookMode(
   token: string,

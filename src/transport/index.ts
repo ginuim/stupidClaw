@@ -1,6 +1,6 @@
-import { getUpdates, sendMessage, sendChatAction } from "./polling";
-import { runWebhookMode } from "./webhook";
-import { startStupidIM } from "./stupid-im";
+import { getUpdates, sendMessage, sendChatAction } from "./polling.js";
+import { runWebhookMode } from "./webhook.js";
+import { startStupidIM } from "./stupid-im.js";
 
 export interface IncomingMessage {
   updateId?: number;

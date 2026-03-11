@@ -560,15 +560,15 @@
                     <div class="terminal-title">bash - stupidClaw</div>
                 </div>
                 <div class="terminal-body">
-                    <div class="comment"># 告别繁琐的 Webhook 配置，WebSocket 本地极速启动</div>
-                    <div><span class="prompt"></span>git clone https://github.com/ginuim/stupidClaw</div>
-                    <div><span class="prompt"></span>cd stupidClaw && pnpm install</div>
-                    <div><span class="prompt"></span>cp .env.example .env</div>
+                    <div class="comment"># 任意目录，一行启动</div>
+                    <div><span class="prompt"></span>npx stupid-claw</div>
+                    <div class="info">[warn] 未检测到 .env 配置文件，程序可能无法正常工作。</div>
+                    <div class="info">[hint] 你可以从 .env.example 复制一份或使用 --config 指定。</div>
                     <br>
-                    <div><span class="prompt"></span>pnpm run dev</div>
-                    <div class="info">[INFO] Memory: Local .stupidClaw/ workspace mounted.</div>
-                    <div class="info">[INFO] StupidIM web client started! Hold Command/Ctrl and click the link below:</div>
-                    <div class="info">[INFO] http://localhost:8080/?token=my_super_secret_token&chatId=chatId&url=ws%3A%2F%2Flocalhost%3A8080</div>
+                    <div class="comment"># 配置 .env 后再次运行</div>
+                    <div><span class="prompt"></span>npx stupid-claw</div>
+                    <div class="info">StupidIM 网页端已启动！请按住 Command/Ctrl 点击下方链接：</div>
+                    <div class="info">http://localhost:8080/?token=xxx&chatId=user_xxx&url=ws%3A%2F%2Flocalhost%3A8080</div>
                     <div class="success">[boot] StupidClaw Telegram polling started</div>
                     <div class="success">[boot] StupidIM HTTP Server started on port 8080</div>
                     <span style="animation: pulse 1s infinite;">_</span>

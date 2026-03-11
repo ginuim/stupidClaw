@@ -1,7 +1,7 @@
 import path from "node:path";
 import test from "node:test";
 import assert from "node:assert/strict";
-import { getStupidClawRootPath, resolveSafePath } from "./workspace-path";
+import { getStupidClawRootPath, resolveSafePath } from "./workspace-path.js";
 
 test("resolveSafePath: 合法相对路径会被解析到 .stupidClaw 下", () => {
   const resolved = resolveSafePath("history/2026-03-10.jsonl");

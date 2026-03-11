@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import { getStupidClawRootPath, resolveSafePath } from "./workspace-path";
+import { getStupidClawRootPath, resolveSafePath } from "./workspace-path.js";
 
 export type ProfileSection = "stable_facts" | "preferences" | "constraints";
 

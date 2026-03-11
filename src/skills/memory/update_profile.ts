@@ -2,8 +2,8 @@ import { Type } from "@mariozechner/pi-ai";
 import {
   updateProfile,
   type ProfileSection
-} from "../../memory/profile-store";
-import type { SkillDefinition } from "../contracts";
+} from "../../memory/profile-store.js";
+import type { SkillDefinition } from "../contracts.js";
 
 const ALLOWED_SECTIONS = ["stable_facts", "preferences", "constraints"] as const;
 

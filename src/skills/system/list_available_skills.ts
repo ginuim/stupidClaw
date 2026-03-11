@@ -1,5 +1,5 @@
 import { Type } from "@mariozechner/pi-ai";
-import type { SkillDefinition, SkillMeta } from "../contracts";
+import type { SkillDefinition, SkillMeta } from "../contracts.js";
 
 export function createListAvailableSkillsSkill(
   getAllSkills: () => SkillMeta[]

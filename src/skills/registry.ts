@@ -1,11 +1,11 @@
-import type { SkillDefinition } from "./contracts";
-import { createManageCronJobsSkill } from "./cron/manage_cron_jobs";
-import { getStandardFileSkillMetas } from "./file-skills";
-import { createQueryHistorySkill } from "./memory/query_history";
-import { createUpdateProfileSkill } from "./memory/update_profile";
-import { createGetSystemTimeSkill } from "./system/get_system_time";
-import { createListAvailableSkillsSkill } from "./system/list_available_skills";
-import { createSkillCreatorSkill } from "./system/skill_creator";
+import type { SkillDefinition } from "./contracts.js";
+import { createManageCronJobsSkill } from "./cron/manage_cron_jobs.js";
+import { getStandardFileSkillMetas } from "./file-skills.js";
+import { createQueryHistorySkill } from "./memory/query_history.js";
+import { createUpdateProfileSkill } from "./memory/update_profile.js";
+import { createGetSystemTimeSkill } from "./system/get_system_time.js";
+import { createListAvailableSkillsSkill } from "./system/list_available_skills.js";
+import { createSkillCreatorSkill } from "./system/skill_creator.js";
 
 export interface SkillRegistry {
   all: SkillDefinition[];

@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { resolveSafePath } from "./workspace-path";
+import { resolveSafePath } from "./workspace-path.js";
 
 export type HistoryRole = "user" | "assistant";
 export type HistoryEventType = "message" | "tool_call" | "tool_result";

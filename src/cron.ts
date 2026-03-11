@@ -1,6 +1,6 @@
-import { appendHistoryEvent } from "./memory/history-store";
-import { sendMessage } from "./transport/polling";
-import { readCronJobs, writeCronJobs, type CronJob } from "./cron/jobs-store";
+import { appendHistoryEvent } from "./memory/history-store.js";
+import { sendMessage } from "./transport/polling.js";
+import { readCronJobs, writeCronJobs, type CronJob } from "./cron/jobs-store.js";
 
 export interface CronExecutor {
   runSkill: (

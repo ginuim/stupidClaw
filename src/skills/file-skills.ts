@@ -4,8 +4,8 @@ import {
   loadSkillsFromDir,
   type Skill
 } from "@mariozechner/pi-coding-agent";
-import { resolveSafePath } from "../memory/workspace-path";
-import type { SkillMeta } from "./contracts";
+import { resolveSafePath } from "../memory/workspace-path.js";
+import type { SkillMeta } from "./contracts.js";
 
 const PROJECT_SKILL_DIRS = [
   {

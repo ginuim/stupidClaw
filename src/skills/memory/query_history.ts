@@ -1,6 +1,6 @@
 import { Type } from "@mariozechner/pi-ai";
-import { queryHistory } from "../../memory/history-store";
-import type { SkillDefinition } from "../contracts";
+import { queryHistory } from "../../memory/history-store.js";
+import type { SkillDefinition } from "../contracts.js";
 
 export function createQueryHistorySkill(): SkillDefinition {
   return {
