@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 
 const STUPIDCLAW_ROOT = path.resolve(process.cwd(), ".stupidClaw");
@@ -31,4 +32,10 @@ export function getStupidClawRootPath(): string {
 export function resolveSafePath(targetPath: string): string {
   const normalized = normalizeRelativePath(targetPath);
   return path.resolve(STUPIDCLAW_ROOT, normalized);
+}
+
+export function ensureWorkspaceDirs(): void {
+  for (const dir of ["workspace", "history", "skills"]) {
+    fs.mkdirSync(resolveSafePath(dir), { recursive: true });
+  }
 }

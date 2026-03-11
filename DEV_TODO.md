@@ -136,4 +136,5 @@
 - [x] 新增 `public/models.md`：完整模型配置指南，含供应商列表、本地模型、OpenAI/Anthropic 兼容配置
 - [x] 更新 `public/getting-started.md`：简化模型配置说明，指向 models.md
 - [x] 验收：支持 MiniMax、OpenAI、Groq 等模型切换
+- [x] 新增 `ensureWorkspaceDirs()`：启动时统一创建所有 `.stupidClaw` 子目录
 - [ ] 撰写第 9 期教程文章

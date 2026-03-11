@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { startCronScheduler } from "./cron";
 import { chat } from "./engine";
+import { ensureWorkspaceDirs } from "./memory/workspace-path";
 import { createSkillRegistry } from "./skills/registry";
 import { startTransport } from "./transport";
 
@@ -78,6 +79,7 @@ function toTextOutput(result: unknown): string {
 
 async function main(): Promise<void> {
   acquireSingleInstanceLock();
+  ensureWorkspaceDirs();
   registerShutdownHooks();
 
   const token = process.env.TELEGRAM_BOT_TOKEN;
