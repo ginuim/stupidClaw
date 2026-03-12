@@ -5,11 +5,7 @@
   "bin": {
     "stupid-claw": "./dist/index.js"
   },
-  "files": [
-    "dist",
-    "public",
-    ".env.example"
-  ],
+  "files": ["dist", "public", ".env.example"],
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc",

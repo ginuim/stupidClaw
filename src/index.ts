@@ -140,12 +140,14 @@ async function main(): Promise<void> {
 
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) {
-    throw new Error("Missing TELEGRAM_BOT_TOKEN");
+    console.warn("[warn] TELEGRAM_BOT_TOKEN 未配置，Telegram 轮询和定时任务不会启动。");
   }
 
   const skillRegistry = createSkillRegistry();
   const skillMap = new Map(skillRegistry.all.map((skill) => [skill.name, skill]));
-  startCronScheduler(token, {
+
+  if (token) {
+    startCronScheduler(token, {
     runSkill: async (skillName, args) => {
       if (!skillName.trim()) {
         return {
@@ -205,7 +207,8 @@ async function main(): Promise<void> {
         };
       }
     }
-  });
+    });
+  }
 
   await startTransport(token, async (message) => {
     message.sendChatAction().catch(() => {});

@@ -45,21 +45,25 @@ async function runPollingMode(
 }
 
 export async function startTransport(
-  token: string,
+  token: string | undefined,
   onMessage: MessageHandler
 ): Promise<void> {
+  const imToken = process.env.STUPID_IM_TOKEN;
+  if (imToken) {
+    startStupidIM(imToken, onMessage);
+  }
+
+  if (!token) {
+    console.log("[boot] TELEGRAM_BOT_TOKEN 未配置，跳过 Telegram 轮询");
+    return;
+  }
+
   const mode = process.env.TELEGRAM_MODE ?? "polling";
 
   if (mode === "webhook") {
     console.log("[boot] StupidClaw Telegram webhook started");
     await runWebhookMode(token, onMessage);
     return;
-  }
-
-  // Polling mode: start StupidIM on its own port if token is provided
-  const imToken = process.env.STUPID_IM_TOKEN;
-  if (imToken) {
-    startStupidIM(imToken, onMessage);
   }
 
   await runPollingMode(token, onMessage);
