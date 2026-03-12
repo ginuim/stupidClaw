@@ -3,11 +3,15 @@ import type { MessageHandler } from "./index.js";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+// dist/transport/stupid-im.js → ../../ 即包根目录
+const PKG_ROOT = path.resolve(fileURLToPath(import.meta.url), "../../../");
 
 export function handleStupidIMRequest(req: IncomingMessage, res: ServerResponse): boolean {
   const pathname = new URL(req.url ?? "/", "http://localhost").pathname;
   if (req.method === "GET" && (pathname === "/" || pathname === "/im")) {
-    const htmlPath = path.resolve(process.cwd(), "public/im.html");
+    const htmlPath = path.resolve(PKG_ROOT, "public/im.html");
     if (fs.existsSync(htmlPath)) {
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
       res.end(fs.readFileSync(htmlPath, "utf-8"));
