@@ -153,7 +153,8 @@
 - [x] 修复：Node ESM 要求相对导入带 .js 扩展名，统一添加
 - [x] 新增 `init` 子命令：将包内 `.env.example` 复制到当前目录 `.env`，并打印下一步操作提示
 - [x] 优化无 `.env` 时的 warn 提示，直接告知用户运行 `npx stupid-claw init`
-- [ ] 验收：在空目录下执行 `npx stupid-claw init` 能生成配置文件并打印友好提示
+- [x] 引入 `@inquirer/prompts` + `picocolors`，将 `init` 升级为交互式配置向导（src/init.ts）
+- [ ] 验收：在空目录下执行 `npx stupid-claw init` 能逐步引导用户完成 .env 配置
 <<<<<<< Updated upstream
 =======
 - [x] 修复：无 TELEGRAM_BOT_TOKEN 时不再 throw，改为 warn 并跳过 Telegram 轮询和定时任务

@@ -26,9 +26,11 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@inquirer/prompts": "^8.3.0",
     "@mariozechner/pi-ai": "^0.57.1",
     "@mariozechner/pi-coding-agent": "^0.57.1",
     "dotenv": "^17.3.1",
+    "picocolors": "^1.1.1",
     "ws": "^8.19.0"
   }
 }

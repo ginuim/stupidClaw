@@ -2,7 +2,6 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import { startCronScheduler } from "./cron.js";
 import { chat } from "./engine.js";
@@ -10,36 +9,13 @@ import { ensureWorkspaceDirs } from "./memory/workspace-path.js";
 import { createSkillRegistry } from "./skills/registry.js";
 import { startTransport } from "./transport/index.js";
 
-// .env.example 与打包产物同在包根目录，dist/index.js → ../
-const PKG_ROOT = path.resolve(fileURLToPath(import.meta.url), "../../");
-
 // 解析命令行参数，支持 --config 指定 .env 路径
 const args = process.argv.slice(2);
 
 // --- init 子命令 ---
 if (args[0] === "init") {
-  const dest = path.resolve(process.cwd(), ".env");
-  const src = path.resolve(PKG_ROOT, ".env.example");
-
-  if (!fs.existsSync(src)) {
-    console.error(`[error] 找不到模板文件: ${src}`);
-    console.error(`[hint]  请检查 npm 包是否完整安装。`);
-    process.exit(1);
-  }
-
-  if (fs.existsSync(dest)) {
-    console.log(`[skip] .env 文件已存在: ${dest}`);
-    console.log(`[hint] 如需重新初始化，请先手动删除该文件。`);
-    process.exit(0);
-  }
-
-  fs.copyFileSync(src, dest);
-  console.log(`[ok] 已生成配置文件: ${dest}`);
-  console.log(`\n接下来：`);
-  console.log(`  1. 打开 .env，填写 TELEGRAM_BOT_TOKEN（从 @BotFather 获取）`);
-  console.log(`  2. 填写你使用的模型供应商 API Key（如 MINIMAX_CN_API_KEY）`);
-  console.log(`  3. 运行 npx stupid-claw 启动`);
-  console.log(`\n详细说明见: https://github.com/stupidclaw/stupidclaw#readme`);
+  const { runInit } = await import("./init.js");
+  await runInit(process.cwd());
   process.exit(0);
 }
 
@@ -51,7 +27,7 @@ const configPath =
 
 // 显式加载指定的 .env 文件
 if (fs.existsSync(configPath)) {
-  dotenv.config({ path: configPath });
+  dotenv.config({ path: configPath, quiet: true });
 } else if (configIdx > -1) {
   // 如果用户指定了但不存在，报错
   console.error(`[error] 配置文件未找到: ${configPath}`);
