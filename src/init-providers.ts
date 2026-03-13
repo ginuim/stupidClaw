@@ -23,7 +23,7 @@ export type ProviderValue = string;
 export const PROVIDERS: InitProvider[] =[
   {
     value: "minimax-cn",
-    name: "MiniMax 国内版 (推荐国内用户)",
+    name: "MiniMax 国内版 (minimaxi.com)",
     envKey: "MINIMAX_CN_API_KEY",
     models:[
       { value: "minimax-cn:MiniMax-M2.5", name: "MiniMax-M2.5" },
@@ -32,7 +32,7 @@ export const PROVIDERS: InitProvider[] =[
   },
   {
     value: "minimax",
-    name: "MiniMax 国际版",
+    name: "MiniMax 国际版 (minimax.io)",
     envKey: "MINIMAX_API_KEY",
     models:[
       { value: "minimax:MiniMax-M2.5", name: "MiniMax-M2.5" },
