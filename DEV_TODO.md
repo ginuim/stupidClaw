@@ -182,3 +182,10 @@
 - [x] 新增 LM Studio provider 支持：LMSTUDIO_BASE_URL 可选默认 localhost:1234
 - [x] 更新 .env.example：补充所有新增 provider 的注释，默认示例改为 deepseek
 - [ ] 验收：在空目录下执行 `npx stupid-claw init` 能逐步引导用户完成 .env 配置
+- [x] skill_creator 改造：参考 anthropic skill-creator，新增 operation read/create/update 三操作，去掉 overwrite 开关；create 时不允许覆盖，强制先 read 再 update；update 支持完整 content 替换或仅更新 description；修复 normalizeSkillName 不允许下划线（与 pi-coding-agent 验证器对齐）；升级 SKILL.md 模板（含 Steps/Examples/Notes sections）；工具 description 加入「访谈优先」指引和「description 是触发机制」说明；progressive disclosure 结构：skill 存入 skills/<name>/SKILL.md，references/ 子目录由 AI 按需创建
+
+---
+
+## Bugfix
+
+- [x] 修复定时任务重复触发导致「Agent is already processing」报错：将 lastTriggeredAt 写盘提前到 triggerJob 调用之前（乐观写），防止 LLM 调用超 15s 时下一个 tick 重复触发同一 session
