@@ -1,6 +1,6 @@
 {
   "name": "stupid-claw",
-  "version": "0.1.6",
+  "version": "0.1.4",
   "type": "module",
   "bin": {
     "stupid-claw": "./dist/index.js"
@@ -13,6 +13,7 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc",
+    "release": "pnpm version patch && pnpm publish --auth-type=web",
     "prepublishOnly": "pnpm run build",
     "test": "node --import tsx --test src/**/*.test.ts",
     "typecheck": "tsc --noEmit",

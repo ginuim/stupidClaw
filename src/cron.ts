@@ -172,7 +172,6 @@ async function tick(token: string, executor: CronExecutor): Promise<void> {
   const now = new Date();
   const minuteKey = formatMinuteKey(now);
   const jobs = await readCronJobs();
-  let changed = false;
 
   for (const job of jobs) {
     if (!job.enabled) {
@@ -189,6 +188,10 @@ async function tick(token: string, executor: CronExecutor): Promise<void> {
     const cronArgs = job.task.toolName
       ? { requirement: job.task.requirement, toolName: job.task.toolName, toolArgs: job.task.toolArgs }
       : { requirement: job.task.requirement, skillNames: job.task.skillNames, prompt: job.task.prompt, sessionKey: job.sessionKey ?? job.targetChatId };
+
+    // 先写 lastTriggeredAt，防止 LLM 调用耗时超过 tick 间隔（15s）时被重复触发
+    job.lastTriggeredAt = new Date().toISOString();
+    await writeCronJobs(jobs);
 
     const ts = new Date().toISOString();
     await appendHistoryEvent({
@@ -242,12 +245,6 @@ async function tick(token: string, executor: CronExecutor): Promise<void> {
       console.error(`[cron] job failed id=${job.id}: ${message}`);
     }
 
-    job.lastTriggeredAt = new Date().toISOString();
-    changed = true;
-  }
-
-  if (changed) {
-    await writeCronJobs(jobs);
   }
 }
 
