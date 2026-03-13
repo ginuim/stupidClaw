@@ -3,60 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { confirm, input, password, select } from "@inquirer/prompts";
 import pc from "picocolors";
-
-// 所有知识集中在这张表里：供应商 id、对应的环境变量名、默认模型
-const PROVIDERS = [
-  {
-    value: "minimax-cn",
-    name: "MiniMax 国内版 (minimaxi.com，推荐国内用户)",
-    envKey: "MINIMAX_CN_API_KEY",
-    defaultModel: "minimax-cn:MiniMax-M2.5",
-  },
-  {
-    value: "minimax",
-    name: "MiniMax 国际版",
-    envKey: "MINIMAX_API_KEY",
-    defaultModel: "minimax:MiniMax-M2.5",
-  },
-  {
-    value: "openai",
-    name: "OpenAI",
-    envKey: "OPENAI_API_KEY",
-    defaultModel: "openai:gpt-4o-mini",
-  },
-  {
-    value: "anthropic",
-    name: "Anthropic Claude",
-    envKey: "ANTHROPIC_API_KEY",
-    defaultModel: "anthropic:claude-3-5-haiku-20241022",
-  },
-  {
-    value: "google",
-    name: "Google Gemini",
-    envKey: "GEMINI_API_KEY",
-    defaultModel: "google:gemini-2.0-flash",
-  },
-  {
-    value: "groq",
-    name: "Groq (免费额度，速度快)",
-    envKey: "GROQ_API_KEY",
-    defaultModel: "groq:llama-3.3-70b-versatile",
-  },
-  {
-    value: "openrouter",
-    name: "OpenRouter (可聚合 DeepSeek 等)",
-    envKey: "OPENROUTER_API_KEY",
-    defaultModel: "openrouter:deepseek/deepseek-chat",
-  },
-  {
-    value: "xai",
-    name: "xAI Grok",
-    envKey: "XAI_API_KEY",
-    defaultModel: "xai:grok-2-latest",
-  },
-] as const;
-
-type ProviderValue = (typeof PROVIDERS)[number]["value"];
+import { PROVIDERS, type ProviderValue } from "./init-providers.js";
 
 function buildEnvContent(fields: {
   stupidModel: string;
@@ -107,35 +54,46 @@ export async function runInit(destDir: string): Promise<void> {
     console.log();
   }
 
-  // 步骤 1：Telegram Bot Token
-  console.log(pc.dim("步骤 1/4") + pc.bold("  Telegram Bot Token"));
-  console.log(pc.dim("  从 @BotFather 获取，格式如：123456789:ABCdefGhi...\n"));
-  const telegramBotToken = await input({
-    message: "TELEGRAM_BOT_TOKEN",
-    validate: (v) => v.trim().length > 0 || "不能为空",
-  });
-
-  // 步骤 2：选择供应商
-  console.log();
-  console.log(pc.dim("步骤 2/4") + pc.bold("  选择 AI 模型供应商"));
+  // 步骤 1：选择供应商
+  console.log(pc.dim("步骤 1/5") + pc.bold("  选择 AI 模型供应商"));
   const providerValue = await select<ProviderValue>({
     message: "使用哪个供应商？",
     choices: PROVIDERS.map((p) => ({ value: p.value, name: p.name })),
+    loop: false,
   });
   const provider = PROVIDERS.find((p) => p.value === providerValue)!;
 
-  // 步骤 3：API Key（隐藏输入）
+  // 步骤 2：选择模型
   console.log();
-  console.log(pc.dim("步骤 3/4") + pc.bold(`  ${provider.envKey}`));
+  console.log(pc.dim("步骤 2/5") + pc.bold("  选择模型"));
+  const stupidModel = await select({
+    message: "使用哪个模型？",
+    choices: provider.models.map((m) => ({ value: m.value, name: m.name })),
+    loop: false,
+  });
+
+  // 步骤 3：API Key（脱敏输入，需告知用户）
+  console.log();
+  console.log(pc.dim("步骤 3/5") + pc.bold(`  ${provider.envKey}`));
+  console.log(pc.dim("  输入时不会显示，属于脱敏保护，请正常粘贴后回车\n"));
   const providerApiKey = await password({
     message: provider.envKey,
     validate: (v) => v.trim().length > 0 || "不能为空",
     mask: "*",
   });
 
-  // 步骤 4：其他配置（有默认值）
+  // 步骤 4：Telegram Bot Token（可选，留空则仅用 StupidIM）
   console.log();
-  console.log(pc.dim("步骤 4/4") + pc.bold("  其他配置") + pc.dim("（回车使用默认值）"));
+  console.log(pc.dim("步骤 4/5") + pc.bold("  Telegram Bot Token"));
+  console.log(pc.dim("  从 @BotFather 获取。直接回车留空则仅使用 StupidIM 网页端\n"));
+  const telegramBotToken = await input({
+    message: "TELEGRAM_BOT_TOKEN（可选）",
+    default: "",
+  });
+
+  // 步骤 5：其他配置
+  console.log();
+  console.log(pc.dim("步骤 5/5") + pc.bold("  其他配置") + pc.dim("（回车使用默认值）"));
   const defaultToken = crypto.randomBytes(16).toString("hex");
   const stupidImToken = await input({
     message: "STUPID_IM_TOKEN（网页端访问密钥）",
@@ -147,9 +105,8 @@ export async function runInit(destDir: string): Promise<void> {
     validate: (v) => /^\d+$/.test(v) || "请输入数字",
   });
 
-  // 写入文件
   const content = buildEnvContent({
-    stupidModel: provider.defaultModel,
+    stupidModel,
     providerEnvKey: provider.envKey,
     providerApiKey: providerApiKey.trim(),
     telegramBotToken: telegramBotToken.trim(),
@@ -162,7 +119,10 @@ export async function runInit(destDir: string): Promise<void> {
   console.log();
   console.log(pc.green("  配置完成！") + "  " + pc.bold(dest));
   console.log();
-  console.log(pc.dim("  下一步，启动机器人："));
+  console.log(pc.dim("  下一步，启动："));
   console.log(`    ${pc.cyan(pc.bold("npx stupid-claw"))}`);
+  if (!telegramBotToken.trim()) {
+    console.log(pc.dim("\n  未配置 Telegram，将启动 StupidIM 网页端，浏览器访问即可对话。"));
+  }
   console.log();
 }

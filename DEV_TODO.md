@@ -137,6 +137,8 @@
 - [x] 新增 `public/models.md`：完整模型配置指南，含供应商列表、本地模型、OpenAI/Anthropic 兼容配置
 - [x] 更新 `public/getting-started.md`：简化模型配置说明，指向 models.md
 - [x] 验收：支持 MiniMax、OpenAI、Groq 等模型切换
+- [x] 修复：`OPENROUTER_API_KEY` 显式映射到 `openrouter` provider，避免错误回退到 `minimax-cn`
+- [x] 优化：重写 API Key 缺失报错，优先按 `STUPID_MODEL` 给出可操作提示（避免误导为 minimax-cn）
 - [x] 新增 `ensureWorkspaceDirs()`：启动时统一创建所有 `.stupidClaw` 子目录
 - [ ] 撰写第 9 期教程文章
 
@@ -154,9 +156,7 @@
 - [x] 新增 `init` 子命令：将包内 `.env.example` 复制到当前目录 `.env`，并打印下一步操作提示
 - [x] 优化无 `.env` 时的 warn 提示，直接告知用户运行 `npx stupid-claw init`
 - [x] 引入 `@inquirer/prompts` + `picocolors`，将 `init` 升级为交互式配置向导（src/init.ts）
+- [x] init 向导：先配置 LLM 供应商与模型，后配 Telegram（可留空，仅用 StupidIM）
+- [x] init 向导：API Key 脱敏输入时提示用户「输入不显示属正常」
+- [x] init 向导：按供应商提供多模型选项（Hunter Alpha、Healer Alpha 等）
 - [ ] 验收：在空目录下执行 `npx stupid-claw init` 能逐步引导用户完成 .env 配置
-<<<<<<< Updated upstream
-=======
-- [x] 修复：无 TELEGRAM_BOT_TOKEN 时不再 throw，改为 warn 并跳过 Telegram 轮询和定时任务
-- [x] 修复：npm 包中 StupidIM 访问 `public/im.html` 报 404（路径改用 import.meta.url 定位包根目录）
->>>>>>> Stashed changes

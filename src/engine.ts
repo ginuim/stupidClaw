@@ -36,6 +36,18 @@ const DEBUG_ENGINE = process.env.DEBUG_STUPIDCLAW === "1";
 const DEBUG_PROMPT = process.env.DEBUG_PROMPT === "1";
 const WORKSPACE_ROOT = resolveSafePath("workspace");
 let startupConfigLogged = false;
+const PROVIDER_ENV_KEY_MAP: Record<string, string> = {
+  minimax: "MINIMAX_API_KEY",
+  "minimax-cn": "MINIMAX_CN_API_KEY",
+  openai: "OPENAI_API_KEY",
+  anthropic: "ANTHROPIC_API_KEY",
+  google: "GEMINI_API_KEY",
+  groq: "GROQ_API_KEY",
+  openrouter: "OPENROUTER_API_KEY",
+  xai: "XAI_API_KEY",
+  "kimi-coding": "KIMI_API_KEY",
+  huggingface: "HF_TOKEN"
+};
 
 function debugLog(message: string): void {
   if (DEBUG_ENGINE) {
@@ -140,6 +152,32 @@ function stripThinkTags(text: string): string {
   return text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
 }
 
+function normalizeApiKeyError(error: unknown): Error {
+  const rawMessage = error instanceof Error ? error.message : String(error);
+  const keyMatch = rawMessage.match(/No API key found for ([\w-]+)/i);
+  if (!keyMatch) {
+    return error instanceof Error ? error : new Error(rawMessage);
+  }
+
+  const missingProvider = keyMatch[1];
+  const configuredModel = process.env.STUPID_MODEL ?? "";
+  const configuredProvider = configuredModel.includes(":") ? configuredModel.split(":")[0] : "";
+
+  if (configuredProvider && configuredProvider !== missingProvider) {
+    const configuredKey = PROVIDER_ENV_KEY_MAP[configuredProvider] ?? `${configuredProvider.toUpperCase()}_API_KEY`;
+    return new Error(
+      `当前 STUPID_MODEL=${configuredModel}，但运行时提示缺少 ${missingProvider} 的 API Key。` +
+        `这通常表示已回退到默认 provider。请确认 ${configuredKey} 已正确配置，且 STUPID_MODEL 的 provider/model_id 拼写正确。`
+    );
+  }
+
+  const missingKey = PROVIDER_ENV_KEY_MAP[missingProvider];
+  if (missingKey) {
+    return new Error(`缺少 ${missingProvider} 的 API Key，请在 .env 中配置 ${missingKey}。`);
+  }
+  return new Error(`缺少 ${missingProvider} 的 API Key，请检查 .env 中对应 provider 的密钥配置。`);
+}
+
 function buildStaticSystemPrompt(fileSkillsPrompt: string): string {
   const lines: string[] = [...IDENTITY_PROMPT_LINES];
   if (fileSkillsPrompt.trim()) {
@@ -185,8 +223,12 @@ function pickModel(modelRegistry: ModelRegistry) {
 
 function createAuthStorage(): AuthStorage {
   const authStorage = AuthStorage.create();
-  // pi-mono 默认会自动读取 OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY 等
-  // 我们保留对 MiniMax 这种需要特殊映射的逻辑（如果只填了 MINIMAX_API_KEY）
+  // 某些 provider 的环境变量名与内部 provider 名不完全一一对应，这里显式映射。
+  if (process.env.OPENROUTER_API_KEY) {
+    authStorage.setRuntimeApiKey("openrouter", process.env.OPENROUTER_API_KEY);
+    debugLog("OPENROUTER_API_KEY loaded for openrouter");
+  }
+  // MiniMax 兼容：如果只填了 MINIMAX_API_KEY，则复用到 minimax-cn
   if (process.env.MINIMAX_API_KEY && !process.env.MINIMAX_CN_API_KEY) {
     authStorage.setRuntimeApiKey("minimax-cn", process.env.MINIMAX_API_KEY);
     debugLog("MINIMAX_CN_API_KEY missing; reuse MINIMAX_API_KEY for minimax-cn");
@@ -243,17 +285,22 @@ async function createChatSession(chatId: string): Promise<ChatSession | null> {
   });
   await loader.reload();
 
-  const { session } = await createAgentSession({
-    authStorage,
-    cwd: WORKSPACE_ROOT,
-    modelRegistry,
-    model,
-    sessionManager: SessionManager.inMemory(),
-    tools: createCodingTools(WORKSPACE_ROOT),
-    customTools: skillRegistry.all.map((skill) => skill.tool),
-    thinkingLevel: "off",
-    resourceLoader: loader
-  });
+  let session: AgentSession;
+  try {
+    ({ session } = await createAgentSession({
+      authStorage,
+      cwd: WORKSPACE_ROOT,
+      modelRegistry,
+      model,
+      sessionManager: SessionManager.inMemory(),
+      tools: createCodingTools(WORKSPACE_ROOT),
+      customTools: skillRegistry.all.map((skill) => skill.tool),
+      thinkingLevel: "off",
+      resourceLoader: loader
+    }));
+  } catch (error) {
+    throw normalizeApiKeyError(error);
+  }
 
   debugLog(`chat session created with model=${model.provider}/${model.id}`);
   return { session, skillRegistry, fileSkillNames };
