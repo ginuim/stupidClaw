@@ -36,6 +36,25 @@ const DEBUG_ENGINE = process.env.DEBUG_STUPIDCLAW === "1";
 const DEBUG_PROMPT = process.env.DEBUG_PROMPT === "1";
 const WORKSPACE_ROOT = resolveSafePath("workspace");
 let startupConfigLogged = false;
+const PROVIDER_ENV_KEY_MAP: Record<string, string> = {
+  minimax: "MINIMAX_API_KEY",
+  "minimax-cn": "MINIMAX_CN_API_KEY",
+  openai: "OPENAI_API_KEY",
+  anthropic: "ANTHROPIC_API_KEY",
+  google: "GEMINI_API_KEY",
+  groq: "GROQ_API_KEY",
+  openrouter: "OPENROUTER_API_KEY",
+  xai: "XAI_API_KEY",
+  "kimi-coding": "KIMI_API_KEY",
+  huggingface: "HF_TOKEN",
+  ollama: "OLLAMA_BASE_URL",
+  deepseek: "DEEPSEEK_API_KEY",
+  kimi: "MOONSHOT_API_KEY",
+  dashscope: "DASHSCOPE_API_KEY",
+  bigmodel: "ZHIPU_API_KEY",
+  "custom-openai": "CUSTOM_OPENAI_API_KEY",
+  "custom-anthropic": "CUSTOM_ANTHROPIC_API_KEY",
+};
 
 function debugLog(message: string): void {
   if (DEBUG_ENGINE) {
@@ -140,6 +159,32 @@ function stripThinkTags(text: string): string {
   return text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
 }
 
+function normalizeApiKeyError(error: unknown): Error {
+  const rawMessage = error instanceof Error ? error.message : String(error);
+  const keyMatch = rawMessage.match(/No API key found for ([\w-]+)/i);
+  if (!keyMatch) {
+    return error instanceof Error ? error : new Error(rawMessage);
+  }
+
+  const missingProvider = keyMatch[1];
+  const configuredModel = process.env.STUPID_MODEL ?? "";
+  const configuredProvider = configuredModel.includes(":") ? configuredModel.split(":")[0] : "";
+
+  if (configuredProvider && configuredProvider !== missingProvider) {
+    const configuredKey = PROVIDER_ENV_KEY_MAP[configuredProvider] ?? `${configuredProvider.toUpperCase()}_API_KEY`;
+    return new Error(
+      `当前 STUPID_MODEL=${configuredModel}，但运行时提示缺少 ${missingProvider} 的 API Key。` +
+        `这通常表示已回退到默认 provider。请确认 ${configuredKey} 已正确配置，且 STUPID_MODEL 的 provider/model_id 拼写正确。`
+    );
+  }
+
+  const missingKey = PROVIDER_ENV_KEY_MAP[missingProvider];
+  if (missingKey) {
+    return new Error(`缺少 ${missingProvider} 的 API Key，请在 .env 中配置 ${missingKey}。`);
+  }
+  return new Error(`缺少 ${missingProvider} 的 API Key，请检查 .env 中对应 provider 的密钥配置。`);
+}
+
 function buildStaticSystemPrompt(fileSkillsPrompt: string): string {
   const lines: string[] = [...IDENTITY_PROMPT_LINES];
   if (fileSkillsPrompt.trim()) {
@@ -161,7 +206,22 @@ function pickModel(modelRegistry: ModelRegistry) {
         debugLog(`selected model from config: ${provider}/${id}`);
         return found;
       }
-      debugLog(`model not found in registry: ${config}`);
+      const providerKey =
+        PROVIDER_ENV_KEY_MAP[provider] ?? `${provider.toUpperCase()}_API_KEY`;
+      const providerModels = available
+        .filter((m) => m.provider === provider)
+        .map((m) => m.id);
+      if (providerModels.length === 0) {
+        throw new Error(
+          `STUPID_MODEL=${config} 无法匹配可用模型：provider=${provider} 当前没有可用模型。` +
+            `请检查 ${providerKey} 是否已正确配置，或确认该 provider 是否受当前运行时支持。`
+        );
+      }
+      throw new Error(
+        `STUPID_MODEL=${config} 无法匹配可用模型。` +
+          `provider=${provider} 当前可用模型：${providerModels.join(", ")}。` +
+          `请检查 model_id 拼写，或改成上述可用模型之一。`
+      );
     } else {
       // 兼容旧逻辑：如果是纯 model_id，尝试在 minimax 家族里找
       const found =
@@ -183,20 +243,154 @@ function pickModel(modelRegistry: ModelRegistry) {
   );
 }
 
-function createAuthStorage(): AuthStorage {
+function createModelRegistry(): ModelRegistry {
   const authStorage = AuthStorage.create();
-  // pi-mono 默认会自动读取 OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY 等
-  // 我们保留对 MiniMax 这种需要特殊映射的逻辑（如果只填了 MINIMAX_API_KEY）
+  // 某些 provider 的环境变量名与内部 provider 名不完全一一对应，这里显式映射。
+  if (process.env.OPENROUTER_API_KEY) {
+    authStorage.setRuntimeApiKey("openrouter", process.env.OPENROUTER_API_KEY);
+    debugLog("OPENROUTER_API_KEY loaded for openrouter");
+  }
+  // MiniMax 兼容：如果只填了 MINIMAX_API_KEY，则复用到 minimax-cn
   if (process.env.MINIMAX_API_KEY && !process.env.MINIMAX_CN_API_KEY) {
     authStorage.setRuntimeApiKey("minimax-cn", process.env.MINIMAX_API_KEY);
     debugLog("MINIMAX_CN_API_KEY missing; reuse MINIMAX_API_KEY for minimax-cn");
   }
-  return authStorage;
+
+  const registry = new ModelRegistry(authStorage);
+
+  // Ollama（本地模型，OpenAI 兼容，无需 API Key）
+  const ollamaModelId = extractCustomModelId("ollama");
+  if (ollamaModelId) {
+    const ollamaBaseUrl = (process.env.OLLAMA_BASE_URL ?? "http://localhost:11434/v1").replace(/\/+$/, "");
+    registry.registerProvider("ollama", {
+      baseUrl: ollamaBaseUrl,
+      apiKey: "ollama",
+      api: "openai-completions",
+      models: [
+        { id: ollamaModelId, name: ollamaModelId, reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 32768, maxTokens: 4096 },
+      ],
+    });
+    debugLog(`ollama provider registered, baseUrl=${ollamaBaseUrl}, model=${ollamaModelId}`);
+  }
+
+  // LM Studio（本地模型，OpenAI 兼容，无需 API Key）
+  const lmstudioModelId = extractCustomModelId("lmstudio");
+  if (lmstudioModelId) {
+    const lmstudioBaseUrl = (process.env.LMSTUDIO_BASE_URL ?? "http://localhost:1234/v1").replace(/\/+$/, "");
+    registry.registerProvider("lmstudio", {
+      baseUrl: lmstudioBaseUrl,
+      apiKey: "lm-studio",
+      api: "openai-completions",
+      models: [
+        { id: lmstudioModelId, name: lmstudioModelId, reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 32768, maxTokens: 4096 },
+      ],
+    });
+    debugLog(`lmstudio provider registered, baseUrl=${lmstudioBaseUrl}, model=${lmstudioModelId}`);
+  }
+
+  // DeepSeek 官方（OpenAI 兼容）
+  if (process.env.DEEPSEEK_API_KEY) {
+    registry.registerProvider("deepseek", {
+      baseUrl: "https://api.deepseek.com/v1",
+      apiKey: process.env.DEEPSEEK_API_KEY,
+      api: "openai-completions",
+      models: [
+        { id: "deepseek-chat", name: "DeepSeek Chat (V3)", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 65536, maxTokens: 8192 },
+        { id: "deepseek-reasoner", name: "DeepSeek Reasoner (R1)", reasoning: true, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 65536, maxTokens: 8192 },
+      ],
+    });
+    debugLog("deepseek provider registered");
+  }
+
+  // Kimi（Moonshot AI，OpenAI 兼容）
+  if (process.env.MOONSHOT_API_KEY) {
+    registry.registerProvider("kimi", {
+      baseUrl: "https://api.moonshot.cn/v1",
+      apiKey: process.env.MOONSHOT_API_KEY,
+      api: "openai-completions",
+      models: [
+        { id: "moonshot-v1-128k", name: "moonshot-v1-128k", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128000, maxTokens: 8192 },
+        { id: "moonshot-v1-32k", name: "moonshot-v1-32k", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 32768, maxTokens: 8192 },
+        { id: "moonshot-v1-8k", name: "moonshot-v1-8k", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 8192, maxTokens: 4096 },
+        { id: "kimi-k2-0711-preview", name: "Kimi K2", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 131072, maxTokens: 8192 },
+        { id: "kimi-thinking-preview", name: "Kimi Thinking", reasoning: true, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 131072, maxTokens: 8192 },
+      ],
+    });
+    debugLog("kimi provider registered");
+  }
+
+  // 阿里云 DashScope（OpenAI 兼容）
+  if (process.env.DASHSCOPE_API_KEY) {
+    registry.registerProvider("dashscope", {
+      baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      apiKey: process.env.DASHSCOPE_API_KEY,
+      api: "openai-completions",
+      models: [
+        { id: "qwen-max", name: "Qwen Max", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 32768, maxTokens: 8192 },
+        { id: "qwen-plus", name: "Qwen Plus", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 131072, maxTokens: 8192 },
+        { id: "qwen-turbo", name: "Qwen Turbo", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 131072, maxTokens: 8192 },
+        { id: "qwen3-235b-a22b", name: "Qwen3 235B", reasoning: true, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 131072, maxTokens: 8192 },
+        { id: "qwen3-72b", name: "Qwen3 72B", reasoning: true, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 131072, maxTokens: 8192 },
+      ],
+    });
+    debugLog("dashscope provider registered");
+  }
+
+  // 智谱 bigmodel.cn（OpenAI 兼容）
+  if (process.env.ZHIPU_API_KEY) {
+    registry.registerProvider("bigmodel", {
+      baseUrl: "https://open.bigmodel.cn/api/paas/v4",
+      apiKey: process.env.ZHIPU_API_KEY,
+      api: "openai-completions",
+      models: [
+        { id: "glm-4", name: "GLM-4", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128000, maxTokens: 4096 },
+        { id: "glm-4-flash", name: "GLM-4-Flash", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128000, maxTokens: 4096 },
+        { id: "glm-z1-flash", name: "GLM-Z1-Flash", reasoning: true, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128000, maxTokens: 4096 },
+      ],
+    });
+    debugLog("bigmodel provider registered");
+  }
+
+  // 自定义 OpenAI 兼容接口
+  if (process.env.CUSTOM_OPENAI_BASE_URL && process.env.CUSTOM_OPENAI_API_KEY) {
+    const modelId = extractCustomModelId("custom-openai");
+    registry.registerProvider("custom-openai", {
+      baseUrl: process.env.CUSTOM_OPENAI_BASE_URL,
+      apiKey: process.env.CUSTOM_OPENAI_API_KEY,
+      api: "openai-completions",
+      models: modelId
+        ? [{ id: modelId, name: modelId, reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128000, maxTokens: 8192 }]
+        : [],
+    });
+    debugLog(`custom-openai provider registered, baseUrl=${process.env.CUSTOM_OPENAI_BASE_URL}`);
+  }
+
+  // 自定义 Anthropic 兼容接口
+  if (process.env.CUSTOM_ANTHROPIC_BASE_URL && process.env.CUSTOM_ANTHROPIC_API_KEY) {
+    const modelId = extractCustomModelId("custom-anthropic");
+    registry.registerProvider("custom-anthropic", {
+      baseUrl: process.env.CUSTOM_ANTHROPIC_BASE_URL,
+      apiKey: process.env.CUSTOM_ANTHROPIC_API_KEY,
+      api: "anthropic-messages",
+      models: modelId
+        ? [{ id: modelId, name: modelId, reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 200000, maxTokens: 8192 }]
+        : [],
+    });
+    debugLog(`custom-anthropic provider registered, baseUrl=${process.env.CUSTOM_ANTHROPIC_BASE_URL}`);
+  }
+
+  return registry;
+}
+
+/** 从 STUPID_MODEL=provider:model_id 中提取指定 provider 的 model_id */
+function extractCustomModelId(providerName: string): string | undefined {
+  const config = process.env.STUPID_MODEL ?? "";
+  if (!config.startsWith(`${providerName}:`)) return undefined;
+  return config.slice(providerName.length + 1) || undefined;
 }
 
 async function createChatSession(chatId: string): Promise<ChatSession | null> {
-  const authStorage = createAuthStorage();
-  const modelRegistry = new ModelRegistry(authStorage);
+  const modelRegistry = createModelRegistry();
   const model = pickModel(modelRegistry);
 
   if (!model) {
@@ -243,17 +437,22 @@ async function createChatSession(chatId: string): Promise<ChatSession | null> {
   });
   await loader.reload();
 
-  const { session } = await createAgentSession({
-    authStorage,
-    cwd: WORKSPACE_ROOT,
-    modelRegistry,
-    model,
-    sessionManager: SessionManager.inMemory(),
-    tools: createCodingTools(WORKSPACE_ROOT),
-    customTools: skillRegistry.all.map((skill) => skill.tool),
-    thinkingLevel: "off",
-    resourceLoader: loader
-  });
+  let session: AgentSession;
+  try {
+    ({ session } = await createAgentSession({
+      authStorage: modelRegistry.authStorage,
+      cwd: WORKSPACE_ROOT,
+      modelRegistry,
+      model,
+      sessionManager: SessionManager.inMemory(),
+      tools: createCodingTools(WORKSPACE_ROOT),
+      customTools: skillRegistry.all.map((skill) => skill.tool),
+      thinkingLevel: "off",
+      resourceLoader: loader
+    }));
+  } catch (error) {
+    throw normalizeApiKeyError(error);
+  }
 
   debugLog(`chat session created with model=${model.provider}/${model.id}`);
   return { session, skillRegistry, fileSkillNames };
@@ -380,7 +579,11 @@ async function chatWithPi(chatId: string, text: string): Promise<string | null> 
     const prompt = await buildTurnPrompt(chatId, text);
     debugPromptLog(chatId, prompt);
     debugToolsLog(chatSession.session, chatSession.skillRegistry, chatSession.fileSkillNames);
-    await chatSession.session.prompt(prompt);
+    try {
+      await chatSession.session.prompt(prompt);
+    } catch (error) {
+      throw normalizeApiKeyError(error);
+    }
   } finally {
     unsubscribe();
   }

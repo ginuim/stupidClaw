@@ -32,9 +32,11 @@ STUPID_MODEL=ollama:llama3.1:8b
 
 ---
 
-## 内置云端供应商
+## 支持的云端供应商
 
-以下供应商已内置在 pi-mono 中，只需填写对应 API Key 即可直接使用。
+### pi-mono 原生内置
+
+以下供应商由 pi-mono 底层直接支持，只需填写对应 API Key 即可使用。
 
 | 供应商标识符 (provider) | 供应商名称 | 需要的环境变量 |
 | :--- | :--- | :--- |
@@ -47,11 +49,19 @@ STUPID_MODEL=ollama:llama3.1:8b
 | `xai` | xAI (Grok) | `XAI_API_KEY` |
 | `openrouter` | OpenRouter（聚合平台） | `OPENROUTER_API_KEY` |
 | `huggingface` | Hugging Face | `HF_TOKEN` |
-| `kimi-coding` | Kimi for Coding | `KIMI_API_KEY` |
 | `minimax` | MiniMax (国际站) | `MINIMAX_API_KEY` |
 | `minimax-cn` | MiniMax (国内站) | `MINIMAX_CN_API_KEY` |
-| `vercel-ai-gateway` | Vercel AI Gateway | `AI_GATEWAY_API_KEY` |
-| `zai` | ZAI | `ZAI_API_KEY` |
+
+### StupidClaw 扩展支持
+
+以下供应商通过 StupidClaw 在启动时自动注册，同样只需填写 API Key 即可直接使用。
+
+| 供应商标识符 (provider) | 供应商名称 | 需要的环境变量 |
+| :--- | :--- | :--- |
+| `deepseek` | DeepSeek 官方 | `DEEPSEEK_API_KEY` |
+| `kimi` | Kimi / Moonshot AI | `MOONSHOT_API_KEY` |
+| `dashscope` | 阿里云 DashScope (Qwen) | `DASHSCOPE_API_KEY` |
+| `bigmodel` | 智谱 bigmodel.cn (GLM) | `ZHIPU_API_KEY` |
 
 **配置示例（选一个填即可）：**
 
@@ -68,7 +78,23 @@ OPENAI_API_KEY=sk-xxxx
 STUPID_MODEL=groq:llama-3.3-70b-versatile
 GROQ_API_KEY=gsk_xxxx
 
-# 通过 OpenRouter 使用 DeepSeek（DeepSeek 无内置 provider，推荐走这条路）
+# 使用 DeepSeek 官方
+STUPID_MODEL=deepseek:deepseek-chat
+DEEPSEEK_API_KEY=sk-xxxx
+
+# 使用 Kimi（Moonshot AI）
+STUPID_MODEL=kimi:moonshot-v1-128k
+MOONSHOT_API_KEY=sk-xxxx
+
+# 使用阿里云 DashScope（Qwen）
+STUPID_MODEL=dashscope:qwen-max
+DASHSCOPE_API_KEY=sk-xxxx
+
+# 使用智谱 GLM
+STUPID_MODEL=bigmodel:glm-4-flash
+ZHIPU_API_KEY=xxxx
+
+# 通过 OpenRouter 使用聚合模型（含 DeepSeek R1、Kimi K2 等）
 STUPID_MODEL=openrouter:deepseek/deepseek-r1
 OPENROUTER_API_KEY=sk-or-xxxx
 ```
@@ -202,9 +228,31 @@ STUPID_MODEL=lmstudio:qwen2.5-coder-7b-instruct
 
 ---
 
-## 其他符合 OpenAI 规范的自定义服务
+## 自定义兼容接口
 
-如果你的模型服务提供了兼容 OpenAI 的接口（如企业私有部署、API 中转站等），同样通过 `models.json` 配置：
+如果你有自己的 OpenAI 或 Anthropic 兼容服务（如企业私有部署、API 中转站），有两种接入方式。
+
+### 方式一：通过 `npx stupid-claw init` 向导配置
+
+运行初始化向导时，选择"自定义 OpenAI 兼容接口"或"自定义 Anthropic 兼容接口"，向导会依次提示输入 Base URL 和 API Key，并自动写入 `.env`：
+
+```dotenv
+STUPID_MODEL=custom-openai:gpt-4o
+CUSTOM_OPENAI_API_KEY=sk-xxxx
+CUSTOM_OPENAI_BASE_URL=https://api.my-company.com/v1
+```
+
+Anthropic 兼容同理：
+
+```dotenv
+STUPID_MODEL=custom-anthropic:claude-3-5-sonnet-20241022
+CUSTOM_ANTHROPIC_API_KEY=xxxx
+CUSTOM_ANTHROPIC_BASE_URL=https://proxy.example.com
+```
+
+### 方式二：通过 `~/.pi/agent/models.json` 配置
+
+适合需要精细控制模型元数据（context window、cost 等）的场景：
 
 ```json
 {
@@ -224,66 +272,9 @@ STUPID_MODEL=lmstudio:qwen2.5-coder-7b-instruct
 }
 ```
 
-`.env` 中选择：
-
 ```dotenv
 STUPID_MODEL=my-proxy:gpt-4o
 MY_API_KEY=xxxx
 ```
 
-如果服务使用 Anthropic 规范：
-
-```json
-{
-  "providers": {
-    "my-anthropic-proxy": {
-      "baseUrl": "https://proxy.example.com",
-      "api": "anthropic-messages",
-      "apiKey": "MY_PROXY_KEY",
-      "models": [
-        { "id": "claude-3-5-sonnet-20241022" }
-      ]
-    }
-  }
-}
-```
-
----
-
-## 为什么 DeepSeek 没有内置 provider？
-
-pi-mono 内置的 provider 列表是官方维护的，DeepSeek 目前没有直接列入。有两种方法使用 DeepSeek：
-
-**方法一（推荐）：通过 OpenRouter**
-
-OpenRouter 接入了 DeepSeek 等几乎所有主流模型，申请一个 OpenRouter Key 即可：
-
-```dotenv
-STUPID_MODEL=openrouter:deepseek/deepseek-r1
-OPENROUTER_API_KEY=sk-or-xxxx
-```
-
-**方法二：通过 models.json 配置 DeepSeek 官方接口**
-
-DeepSeek 提供兼容 OpenAI 的接口：
-
-```json
-{
-  "providers": {
-    "deepseek": {
-      "baseUrl": "https://api.deepseek.com/v1",
-      "api": "openai-completions",
-      "apiKey": "DEEPSEEK_API_KEY",
-      "models": [
-        { "id": "deepseek-chat" },
-        { "id": "deepseek-reasoner" }
-      ]
-    }
-  }
-}
-```
-
-```dotenv
-STUPID_MODEL=deepseek:deepseek-chat
-DEEPSEEK_API_KEY=sk-xxxx
-```
+如果服务使用 Anthropic 规范，将 `"api"` 改为 `"anthropic-messages"` 即可。

@@ -137,6 +137,10 @@
 - [x] 新增 `docs/models.md`：完整模型配置指南，含供应商列表、本地模型、OpenAI/Anthropic 兼容配置
 - [x] 更新 `docs/getting-started.md`：简化模型配置说明，指向 models.md
 - [x] 验收：支持 MiniMax、OpenAI、Groq 等模型切换
+- [x] 修复：`OPENROUTER_API_KEY` 显式映射到 `openrouter` provider，避免错误回退到 `minimax-cn`
+- [x] 优化：重写 API Key 缺失报错，优先按 `STUPID_MODEL` 给出可操作提示（避免误导为 minimax-cn）
+- [x] 修复：`session.prompt` 阶段也统一重写 API Key 缺失错误，确保 StupidIM 日志提示一致
+- [x] 修复：显式配置 `STUPID_MODEL=provider:model` 时禁止静默回退，改为直接报 provider/model 可用性错误
 - [x] 新增 `ensureWorkspaceDirs()`：启动时统一创建所有 `.stupidClaw` 子目录
 - [ ] 撰写第 9 期教程文章
 
@@ -153,9 +157,35 @@
 - [x] 修复：Node ESM 要求相对导入带 .js 扩展名，统一添加
 - [x] 新增 `init` 子命令：将包内 `.env.example` 复制到当前目录 `.env`，并打印下一步操作提示
 - [x] 优化无 `.env` 时的 warn 提示，直接告知用户运行 `npx stupid-claw init`
-- [ ] 验收：在空目录下执行 `npx stupid-claw init` 能生成配置文件并打印友好提示
-<<<<<<< Updated upstream
-=======
-- [x] 修复：无 TELEGRAM_BOT_TOKEN 时不再 throw，改为 warn 并跳过 Telegram 轮询和定时任务
-- [x] 修复：npm 包中 StupidIM 访问 `public/im.html` 报 404（路径改用 import.meta.url 定位包根目录）
->>>>>>> Stashed changes
+- [x] 引入 `@inquirer/prompts` + `picocolors`，将 `init` 升级为交互式配置向导（src/init.ts）
+- [x] init 向导：先配置 LLM 供应商与模型，后配 Telegram（可留空，仅用 StupidIM）
+- [x] init 向导：API Key 脱敏输入时提示用户「输入不显示属正常」
+- [x] init 向导：按供应商提供多模型选项（Hunter Alpha、Healer Alpha 等）
+- [x] init 向导改造：先输入 API Key 再选模型，OpenRouter 基于 Key 拉取可用模型并优先展示国产 Agent 推荐
+- [x] 修复：init 的 OpenRouter 模型列表改为基于 `ModelRegistry` 可用模型过滤（与运行时一致），并将文案改为“国产高性价比”
+- [x] 增强：init 在输入 API Key 后先做在线校验，失败时提示重试或允许用户确认继续
+- [x] 修复：API Key 校验改为真实最小模型请求（probe prompt），不再仅依赖 `/models` 或静态可用模型判断
+- [x] 修复：API Key 校验改为原始 HTTP 探活（OpenAI/Anthropic 兼容请求），避免 Agent 会话层误判
+- [x] 重构：API Key 校验改为按 provider 调官方免费端点（/models or /auth/key），彻底去掉通用探活猜测逻辑
+- [x] OpenRouter 校验时同步拉取可用模型列表，直接用于模型选择，一次网络请求两用
+- [x] chooseModelByProvider 接收 preloadedModelIds，OpenRouter 模型选择完全基于 Key 实际可用范围过滤
+- [x] 修复：OpenRouter 探活端点从 /models 改为 /auth/key（Key 专用验证端点），再单独拉 /models
+- [x] 修复：minimax-cn 探活改为 POST /text/chatcompletion_v2（最小 token 请求），不再依赖 GET /models
+- [x] 去掉 init 向导的 API Key 在线探活（probeKey），validateProviderApiKey 仅保留空值检查
+- [x] 新增 DashScope（阿里云）、bigmodel.cn（智谱）provider 支持，通过 registerProvider 注册
+- [x] 新增 custom-openai / custom-anthropic：init 向导支持输入任意 baseUrl，engine 动态注册
+- [x] 新增 Kimi（Moonshot AI）provider 支持，OpenAI 兼容，MOONSHOT_API_KEY
+- [x] 新增 DeepSeek 官方 provider 支持，OpenAI 兼容，DEEPSEEK_API_KEY
+- [x] 同步更新 models.md / getting-started.md / troubleshooting.md，反映新增 provider 和 init 向导自定义接口
+- [x] 重写 AGENTS.md：合并使用说明（安装、配置、目录结构）与开发约定，供访问仓库的 LLM 快速上手
+- [x] 新增 Ollama provider 支持：init 向导可选，无需 API Key，OLLAMA_BASE_URL 可选默认 localhost:11434
+- [x] 新增 LM Studio provider 支持：LMSTUDIO_BASE_URL 可选默认 localhost:1234
+- [x] 更新 .env.example：补充所有新增 provider 的注释，默认示例改为 deepseek
+- [ ] 验收：在空目录下执行 `npx stupid-claw init` 能逐步引导用户完成 .env 配置
+- [x] skill_creator 改造：参考 anthropic skill-creator，新增 operation read/create/update 三操作，去掉 overwrite 开关；create 时不允许覆盖，强制先 read 再 update；update 支持完整 content 替换或仅更新 description；修复 normalizeSkillName 不允许下划线（与 pi-coding-agent 验证器对齐）；升级 SKILL.md 模板（含 Steps/Examples/Notes sections）；工具 description 加入「访谈优先」指引和「description 是触发机制」说明；progressive disclosure 结构：skill 存入 skills/<name>/SKILL.md，references/ 子目录由 AI 按需创建
+
+---
+
+## Bugfix
+
+- [x] 修复定时任务重复触发导致「Agent is already processing」报错：将 lastTriggeredAt 写盘提前到 triggerJob 调用之前（乐观写），防止 LLM 调用超 15s 时下一个 tick 重复触发同一 session
