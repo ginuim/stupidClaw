@@ -65,6 +65,8 @@ DEEPSEEK_API_KEY=sk-xxxx         # 对应供应商的 API Key
 | `groq` | Groq（免费额度，速度快） | `GROQ_API_KEY` |
 | `openrouter` | OpenRouter（聚合平台） | `OPENROUTER_API_KEY` |
 | `xai` | xAI Grok | `XAI_API_KEY` |
+| `ollama` | Ollama 本地模型 | `OLLAMA_BASE_URL`（可选，默认 localhost:11434） |
+| `lmstudio` | LM Studio 本地模型 | `LMSTUDIO_BASE_URL`（可选，默认 localhost:1234） |
 | `custom-openai` | 任意 OpenAI 兼容接口 | `CUSTOM_OPENAI_API_KEY` + `CUSTOM_OPENAI_BASE_URL` |
 | `custom-anthropic` | 任意 Anthropic 兼容接口 | `CUSTOM_ANTHROPIC_API_KEY` + `CUSTOM_ANTHROPIC_BASE_URL` |
 
@@ -96,27 +98,46 @@ STUPID_MODEL=openrouter:deepseek/deepseek-r1
 OPENROUTER_API_KEY=sk-or-xxxx
 ```
 
-### 本地模型（Ollama / LM Studio / vLLM）
+### 本地模型（Ollama）
 
-本地模型需要先在 `~/.pi/agent/models.json` 中注册，再填 `STUPID_MODEL`：
+Ollama 直接通过 `.env` 配置，无需 `models.json`：
+
+```dotenv
+# OLLAMA_BASE_URL 可省略，默认 http://localhost:11434/v1
+STUPID_MODEL=ollama:qwen2.5-coder:7b
+OLLAMA_BASE_URL=http://localhost:11434/v1
+```
+
+也可以通过 `npx stupid-claw init` 向导选择"Ollama"，向导会提示输入 Base URL（直接回车使用默认值）和 model id。
+
+### 本地模型（LM Studio）
+
+与 Ollama 相同，直接通过 `.env` 配置：
+
+```dotenv
+STUPID_MODEL=lmstudio:qwen2.5-coder-7b-instruct
+LMSTUDIO_BASE_URL=http://localhost:1234/v1
+```
+
+### 其他 OpenAI 兼容本地服务（vLLM 等）
+
+在 init 向导里选择"自定义 OpenAI 兼容接口"，或手动在 `~/.pi/agent/models.json` 中注册：
 
 ```json
 {
   "providers": {
-    "ollama": {
-      "baseUrl": "http://localhost:11434/v1",
+    "lmstudio": {
+      "baseUrl": "http://localhost:1234/v1",
       "api": "openai-completions",
-      "apiKey": "ollama",
-      "models": [
-        { "id": "qwen2.5-coder:7b" }
-      ]
+      "apiKey": "lm-studio",
+      "models": [{ "id": "qwen2.5-coder-7b-instruct" }]
     }
   }
 }
 ```
 
 ```dotenv
-STUPID_MODEL=ollama:qwen2.5-coder:7b
+STUPID_MODEL=lmstudio:qwen2.5-coder-7b-instruct
 ```
 
 ### 完整 .env 字段说明

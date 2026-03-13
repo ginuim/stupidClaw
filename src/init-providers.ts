@@ -3,6 +3,7 @@
 export type InitProvider = {
   value: string;
   name: string;
+  /** API Key 对应的环境变量名。空字符串表示无需 API Key（如 Ollama） */
   envKey: string;
   models: readonly { value: string; name: string }[];
   /** 固定 baseUrl（dashscope/bigmodel 等 OpenAI 兼容服务） */
@@ -11,6 +12,10 @@ export type InitProvider = {
   apiType?: "openai-completions" | "anthropic-messages";
   /** 需要向导额外提示用户输入 baseUrl */
   isCustom?: true;
+  /** isCustom 时 baseUrl 输入框的默认值 */
+  defaultBaseUrl?: string;
+  /** baseUrl 写入 .env 时使用的变量名（默认由 envKey 推导） */
+  baseUrlEnvKey?: string;
 };
 
 export type ProviderValue = string;
@@ -135,6 +140,26 @@ export const PROVIDERS: InitProvider[] =[
     name: "xAI Grok",
     envKey: "XAI_API_KEY",
     models:[{ value: "xai:grok-latest", name: "Grok Latest" }],
+  },
+  {
+    value: "ollama",
+    name: "Ollama（本地模型，需先在本机运行 Ollama）",
+    envKey: "",
+    apiType: "openai-completions",
+    isCustom: true,
+    defaultBaseUrl: "http://localhost:11434/v1",
+    baseUrlEnvKey: "OLLAMA_BASE_URL",
+    models: [],
+  },
+  {
+    value: "lmstudio",
+    name: "LM Studio（本地模型，需先在本机运行 LM Studio）",
+    envKey: "",
+    apiType: "openai-completions",
+    isCustom: true,
+    defaultBaseUrl: "http://localhost:1234/v1",
+    baseUrlEnvKey: "LMSTUDIO_BASE_URL",
+    models: [],
   },
   {
     value: "custom-openai",

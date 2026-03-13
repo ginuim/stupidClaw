@@ -178,5 +178,7 @@
 - [x] 新增 DeepSeek 官方 provider 支持，OpenAI 兼容，DEEPSEEK_API_KEY
 - [x] 同步更新 models.md / getting-started.md / troubleshooting.md，反映新增 provider 和 init 向导自定义接口
 - [x] 重写 AGENTS.md：合并使用说明（安装、配置、目录结构）与开发约定，供访问仓库的 LLM 快速上手
+- [x] 新增 Ollama provider 支持：init 向导可选，无需 API Key，OLLAMA_BASE_URL 可选默认 localhost:11434
+- [x] 新增 LM Studio provider 支持：LMSTUDIO_BASE_URL 可选默认 localhost:1234
 - [x] 更新 .env.example：补充所有新增 provider 的注释，默认示例改为 deepseek
 - [ ] 验收：在空目录下执行 `npx stupid-claw init` 能逐步引导用户完成 .env 配置

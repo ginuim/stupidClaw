@@ -47,6 +47,7 @@ const PROVIDER_ENV_KEY_MAP: Record<string, string> = {
   xai: "XAI_API_KEY",
   "kimi-coding": "KIMI_API_KEY",
   huggingface: "HF_TOKEN",
+  ollama: "OLLAMA_BASE_URL",
   deepseek: "DEEPSEEK_API_KEY",
   kimi: "MOONSHOT_API_KEY",
   dashscope: "DASHSCOPE_API_KEY",
@@ -256,6 +257,36 @@ function createModelRegistry(): ModelRegistry {
   }
 
   const registry = new ModelRegistry(authStorage);
+
+  // Ollama（本地模型，OpenAI 兼容，无需 API Key）
+  const ollamaModelId = extractCustomModelId("ollama");
+  if (ollamaModelId) {
+    const ollamaBaseUrl = (process.env.OLLAMA_BASE_URL ?? "http://localhost:11434/v1").replace(/\/+$/, "");
+    registry.registerProvider("ollama", {
+      baseUrl: ollamaBaseUrl,
+      apiKey: "ollama",
+      api: "openai-completions",
+      models: [
+        { id: ollamaModelId, name: ollamaModelId, reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 32768, maxTokens: 4096 },
+      ],
+    });
+    debugLog(`ollama provider registered, baseUrl=${ollamaBaseUrl}, model=${ollamaModelId}`);
+  }
+
+  // LM Studio（本地模型，OpenAI 兼容，无需 API Key）
+  const lmstudioModelId = extractCustomModelId("lmstudio");
+  if (lmstudioModelId) {
+    const lmstudioBaseUrl = (process.env.LMSTUDIO_BASE_URL ?? "http://localhost:1234/v1").replace(/\/+$/, "");
+    registry.registerProvider("lmstudio", {
+      baseUrl: lmstudioBaseUrl,
+      apiKey: "lm-studio",
+      api: "openai-completions",
+      models: [
+        { id: lmstudioModelId, name: lmstudioModelId, reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 32768, maxTokens: 4096 },
+      ],
+    });
+    debugLog(`lmstudio provider registered, baseUrl=${lmstudioBaseUrl}, model=${lmstudioModelId}`);
+  }
 
   // DeepSeek 官方（OpenAI 兼容）
   if (process.env.DEEPSEEK_API_KEY) {

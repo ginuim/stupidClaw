@@ -196,8 +196,10 @@ function buildEnvContent(fields: {
     `STUPID_MODEL=${fields.stupidModel}`,
     ``,
     `# --- 供应商密钥 ---`,
-    `${fields.providerEnvKey}=${fields.providerApiKey}`,
   ];
+  if (fields.providerEnvKey) {
+    lines.push(`${fields.providerEnvKey}=${fields.providerApiKey}`);
+  }
   if (fields.customBaseUrlKey && fields.customBaseUrl) {
     lines.push(`${fields.customBaseUrlKey}=${fields.customBaseUrl}`);
   }
@@ -247,24 +249,31 @@ export async function runInit(destDir: string): Promise<void> {
   });
   const provider = PROVIDERS.find((p) => p.value === providerValue)!;
 
-  // 步骤 2：API Key（脱敏输入，需告知用户）
-  console.log();
-  console.log(pc.dim("步骤 2/5") + pc.bold(`  ${provider.envKey}`));
-  console.log(pc.dim("  输入时不会显示，属于脱敏保护，请正常粘贴后回车\n"));
-  const providerApiKey = await password({
-    message: provider.envKey,
-    validate: (v) => v.trim().length > 0 || "不能为空",
-    mask: "*",
-  });
-  const providerApiKeyValue = providerApiKey.trim();
+  // 步骤 2：API Key（无 envKey 的 provider 如 Ollama 跳过此步）
+  let providerApiKeyValue = "";
+  if (provider.envKey) {
+    console.log();
+    console.log(pc.dim("步骤 2/5") + pc.bold(`  ${provider.envKey}`));
+    console.log(pc.dim("  输入时不会显示，属于脱敏保护，请正常粘贴后回车\n"));
+    const providerApiKey = await password({
+      message: provider.envKey,
+      validate: (v) => v.trim().length > 0 || "不能为空",
+      mask: "*",
+    });
+    providerApiKeyValue = providerApiKey.trim();
+  }
 
   // 步骤 2.5（仅 isCustom）：输入自定义 baseUrl
   let customBaseUrl = "";
   if (provider.isCustom) {
     console.log();
-    console.log(pc.dim("  自定义接口：输入服务的 Base URL（如 https://your-proxy.com/v1）\n"));
+    const hint = provider.defaultBaseUrl
+      ? `输入服务的 Base URL（默认：${provider.defaultBaseUrl}）`
+      : "输入服务的 Base URL（如 https://your-proxy.com/v1）";
+    console.log(pc.dim(`  ${hint}\n`));
     customBaseUrl = await input({
       message: "Base URL",
+      default: provider.defaultBaseUrl ?? "",
       validate: (v) => (v.trim().startsWith("http") ? true : "请输入以 http 开头的完整 URL"),
     });
     customBaseUrl = customBaseUrl.trim().replace(/\/+$/, "");
@@ -299,7 +308,9 @@ export async function runInit(destDir: string): Promise<void> {
   });
 
   const customBaseUrlKey = provider.isCustom
-    ? `${provider.envKey.replace(/_API_KEY$/, "")}_BASE_URL`
+    ? (provider.baseUrlEnvKey ?? (provider.envKey
+        ? `${provider.envKey.replace(/_API_KEY$/, "")}_BASE_URL`
+        : undefined))
     : undefined;
 
   const content = buildEnvContent({
