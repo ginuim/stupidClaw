@@ -46,7 +46,13 @@ const PROVIDER_ENV_KEY_MAP: Record<string, string> = {
   openrouter: "OPENROUTER_API_KEY",
   xai: "XAI_API_KEY",
   "kimi-coding": "KIMI_API_KEY",
-  huggingface: "HF_TOKEN"
+  huggingface: "HF_TOKEN",
+  deepseek: "DEEPSEEK_API_KEY",
+  kimi: "MOONSHOT_API_KEY",
+  dashscope: "DASHSCOPE_API_KEY",
+  bigmodel: "ZHIPU_API_KEY",
+  "custom-openai": "CUSTOM_OPENAI_API_KEY",
+  "custom-anthropic": "CUSTOM_ANTHROPIC_API_KEY",
 };
 
 function debugLog(message: string): void {
@@ -199,7 +205,22 @@ function pickModel(modelRegistry: ModelRegistry) {
         debugLog(`selected model from config: ${provider}/${id}`);
         return found;
       }
-      debugLog(`model not found in registry: ${config}`);
+      const providerKey =
+        PROVIDER_ENV_KEY_MAP[provider] ?? `${provider.toUpperCase()}_API_KEY`;
+      const providerModels = available
+        .filter((m) => m.provider === provider)
+        .map((m) => m.id);
+      if (providerModels.length === 0) {
+        throw new Error(
+          `STUPID_MODEL=${config} 无法匹配可用模型：provider=${provider} 当前没有可用模型。` +
+            `请检查 ${providerKey} 是否已正确配置，或确认该 provider 是否受当前运行时支持。`
+        );
+      }
+      throw new Error(
+        `STUPID_MODEL=${config} 无法匹配可用模型。` +
+          `provider=${provider} 当前可用模型：${providerModels.join(", ")}。` +
+          `请检查 model_id 拼写，或改成上述可用模型之一。`
+      );
     } else {
       // 兼容旧逻辑：如果是纯 model_id，尝试在 minimax 家族里找
       const found =
@@ -221,7 +242,7 @@ function pickModel(modelRegistry: ModelRegistry) {
   );
 }
 
-function createAuthStorage(): AuthStorage {
+function createModelRegistry(): ModelRegistry {
   const authStorage = AuthStorage.create();
   // 某些 provider 的环境变量名与内部 provider 名不完全一一对应，这里显式映射。
   if (process.env.OPENROUTER_API_KEY) {
@@ -233,12 +254,112 @@ function createAuthStorage(): AuthStorage {
     authStorage.setRuntimeApiKey("minimax-cn", process.env.MINIMAX_API_KEY);
     debugLog("MINIMAX_CN_API_KEY missing; reuse MINIMAX_API_KEY for minimax-cn");
   }
-  return authStorage;
+
+  const registry = new ModelRegistry(authStorage);
+
+  // DeepSeek 官方（OpenAI 兼容）
+  if (process.env.DEEPSEEK_API_KEY) {
+    registry.registerProvider("deepseek", {
+      baseUrl: "https://api.deepseek.com/v1",
+      apiKey: process.env.DEEPSEEK_API_KEY,
+      api: "openai-completions",
+      models: [
+        { id: "deepseek-chat", name: "DeepSeek Chat (V3)", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 65536, maxTokens: 8192 },
+        { id: "deepseek-reasoner", name: "DeepSeek Reasoner (R1)", reasoning: true, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 65536, maxTokens: 8192 },
+      ],
+    });
+    debugLog("deepseek provider registered");
+  }
+
+  // Kimi（Moonshot AI，OpenAI 兼容）
+  if (process.env.MOONSHOT_API_KEY) {
+    registry.registerProvider("kimi", {
+      baseUrl: "https://api.moonshot.cn/v1",
+      apiKey: process.env.MOONSHOT_API_KEY,
+      api: "openai-completions",
+      models: [
+        { id: "moonshot-v1-128k", name: "moonshot-v1-128k", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128000, maxTokens: 8192 },
+        { id: "moonshot-v1-32k", name: "moonshot-v1-32k", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 32768, maxTokens: 8192 },
+        { id: "moonshot-v1-8k", name: "moonshot-v1-8k", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 8192, maxTokens: 4096 },
+        { id: "kimi-k2-0711-preview", name: "Kimi K2", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 131072, maxTokens: 8192 },
+        { id: "kimi-thinking-preview", name: "Kimi Thinking", reasoning: true, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 131072, maxTokens: 8192 },
+      ],
+    });
+    debugLog("kimi provider registered");
+  }
+
+  // 阿里云 DashScope（OpenAI 兼容）
+  if (process.env.DASHSCOPE_API_KEY) {
+    registry.registerProvider("dashscope", {
+      baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      apiKey: process.env.DASHSCOPE_API_KEY,
+      api: "openai-completions",
+      models: [
+        { id: "qwen-max", name: "Qwen Max", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 32768, maxTokens: 8192 },
+        { id: "qwen-plus", name: "Qwen Plus", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 131072, maxTokens: 8192 },
+        { id: "qwen-turbo", name: "Qwen Turbo", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 131072, maxTokens: 8192 },
+        { id: "qwen3-235b-a22b", name: "Qwen3 235B", reasoning: true, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 131072, maxTokens: 8192 },
+        { id: "qwen3-72b", name: "Qwen3 72B", reasoning: true, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 131072, maxTokens: 8192 },
+      ],
+    });
+    debugLog("dashscope provider registered");
+  }
+
+  // 智谱 bigmodel.cn（OpenAI 兼容）
+  if (process.env.ZHIPU_API_KEY) {
+    registry.registerProvider("bigmodel", {
+      baseUrl: "https://open.bigmodel.cn/api/paas/v4",
+      apiKey: process.env.ZHIPU_API_KEY,
+      api: "openai-completions",
+      models: [
+        { id: "glm-4", name: "GLM-4", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128000, maxTokens: 4096 },
+        { id: "glm-4-flash", name: "GLM-4-Flash", reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128000, maxTokens: 4096 },
+        { id: "glm-z1-flash", name: "GLM-Z1-Flash", reasoning: true, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128000, maxTokens: 4096 },
+      ],
+    });
+    debugLog("bigmodel provider registered");
+  }
+
+  // 自定义 OpenAI 兼容接口
+  if (process.env.CUSTOM_OPENAI_BASE_URL && process.env.CUSTOM_OPENAI_API_KEY) {
+    const modelId = extractCustomModelId("custom-openai");
+    registry.registerProvider("custom-openai", {
+      baseUrl: process.env.CUSTOM_OPENAI_BASE_URL,
+      apiKey: process.env.CUSTOM_OPENAI_API_KEY,
+      api: "openai-completions",
+      models: modelId
+        ? [{ id: modelId, name: modelId, reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 128000, maxTokens: 8192 }]
+        : [],
+    });
+    debugLog(`custom-openai provider registered, baseUrl=${process.env.CUSTOM_OPENAI_BASE_URL}`);
+  }
+
+  // 自定义 Anthropic 兼容接口
+  if (process.env.CUSTOM_ANTHROPIC_BASE_URL && process.env.CUSTOM_ANTHROPIC_API_KEY) {
+    const modelId = extractCustomModelId("custom-anthropic");
+    registry.registerProvider("custom-anthropic", {
+      baseUrl: process.env.CUSTOM_ANTHROPIC_BASE_URL,
+      apiKey: process.env.CUSTOM_ANTHROPIC_API_KEY,
+      api: "anthropic-messages",
+      models: modelId
+        ? [{ id: modelId, name: modelId, reasoning: false, input: ["text"], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 200000, maxTokens: 8192 }]
+        : [],
+    });
+    debugLog(`custom-anthropic provider registered, baseUrl=${process.env.CUSTOM_ANTHROPIC_BASE_URL}`);
+  }
+
+  return registry;
+}
+
+/** 从 STUPID_MODEL=provider:model_id 中提取指定 provider 的 model_id */
+function extractCustomModelId(providerName: string): string | undefined {
+  const config = process.env.STUPID_MODEL ?? "";
+  if (!config.startsWith(`${providerName}:`)) return undefined;
+  return config.slice(providerName.length + 1) || undefined;
 }
 
 async function createChatSession(chatId: string): Promise<ChatSession | null> {
-  const authStorage = createAuthStorage();
-  const modelRegistry = new ModelRegistry(authStorage);
+  const modelRegistry = createModelRegistry();
   const model = pickModel(modelRegistry);
 
   if (!model) {
@@ -288,7 +409,7 @@ async function createChatSession(chatId: string): Promise<ChatSession | null> {
   let session: AgentSession;
   try {
     ({ session } = await createAgentSession({
-      authStorage,
+      authStorage: modelRegistry.authStorage,
       cwd: WORKSPACE_ROOT,
       modelRegistry,
       model,
@@ -427,7 +548,11 @@ async function chatWithPi(chatId: string, text: string): Promise<string | null> 
     const prompt = await buildTurnPrompt(chatId, text);
     debugPromptLog(chatId, prompt);
     debugToolsLog(chatSession.session, chatSession.skillRegistry, chatSession.fileSkillNames);
-    await chatSession.session.prompt(prompt);
+    try {
+      await chatSession.session.prompt(prompt);
+    } catch (error) {
+      throw normalizeApiKeyError(error);
+    }
   } finally {
     unsubscribe();
   }

@@ -34,17 +34,17 @@ rm .stupidClaw/polling.lock
 
 **排查步骤：**
 
-1. 确认日志里有 `[ok] chatId=... updateId=...`，如果没有说明请求到 MiniMax 失败。
-2. 检查 `MINIMAX_API_KEY` 是否填写，以及账户是否有余额。
+1. 确认日志里有 `[ok] chatId=... updateId=...`，如果没有说明请求到模型服务失败。
+2. 检查 `STUPID_MODEL` 对应的 API Key 是否填写，以及账户是否有余额。
 3. 开启详细日志：
 
 ```bash
 DEBUG_STUPIDCLAW=1 pnpm dev
 ```
 
-4. 查看 `[debug][engine]` 输出，确认模型返回了什么。
+4. 查看 `[debug][engine]` 输出，确认 `selectedProvider` 和 `selectedModelId` 是否符合预期。
 
-**MiniMax API Key 未填写时的 fallback 行为：**
+**API Key 未填写时的 fallback 行为：**
 
 引擎会回显用户输入，而不是真正调用模型。这是刻意设计的 fallback，方便无 key 时验证传输层是否工作正常。
 
@@ -172,13 +172,22 @@ Profile 保存在 `.stupidClaw/profile.md`，该文件不在 git 追踪范围内
 
 | 变量 | 必填 | 说明 |
 |------|------|------|
-| `TELEGRAM_BOT_TOKEN` | 是 | BotFather 提供的 Bot token |
-| `MINIMAX_API_KEY` | 推荐 | 不填会走 fallback 回显，无法真正对话 |
-| `MINIMAX_MODEL` | 否 | 默认 `MiniMax-M2.5` |
+| `STUPID_MODEL` | 推荐 | 模型选择，格式 `provider:model_id`，如 `deepseek:deepseek-chat` |
+| `TELEGRAM_BOT_TOKEN` | 否 | BotFather 提供的 Bot token，不填则只能用 StupidIM |
+| `MINIMAX_CN_API_KEY` | 按需 | MiniMax 国内站 API Key |
+| `OPENAI_API_KEY` | 按需 | OpenAI API Key |
+| `ANTHROPIC_API_KEY` | 按需 | Anthropic API Key |
+| `DEEPSEEK_API_KEY` | 按需 | DeepSeek 官方 API Key |
+| `MOONSHOT_API_KEY` | 按需 | Kimi / Moonshot AI API Key |
+| `DASHSCOPE_API_KEY` | 按需 | 阿里云 DashScope API Key |
+| `ZHIPU_API_KEY` | 按需 | 智谱 bigmodel.cn API Key |
+| `OPENROUTER_API_KEY` | 按需 | OpenRouter API Key |
+| `GROQ_API_KEY` | 按需 | Groq API Key |
 | `TELEGRAM_MODE` | 否 | `polling`（默认）或 `webhook` |
 | `TELEGRAM_WEBHOOK_URL` | Webhook 时必填 | 公网 HTTPS 回调地址 |
 | `TELEGRAM_WEBHOOK_SECRET` | 否 | Webhook 请求验签密钥 |
 | `TELEGRAM_WEBHOOK_PATH` | 否 | 默认 `/telegram/webhook` |
-| `PORT` | 否 | Webhook 主服务端口 / Polling 时 StupidIM 端口，默认 `8787` |
+| `PORT` | 否 | 服务端口，默认 `8080` |
+| `STUPID_IM_TOKEN` | 否 | StupidIM 网页端访问密钥 |
 | `DEBUG_STUPIDCLAW` | 否 | 设为 `1` 开启引擎调试日志 |
 | `DEBUG_PROMPT` | 否 | 设为 `1` 打印每次发给模型的完整 prompt |

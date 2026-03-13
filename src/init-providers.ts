@@ -1,11 +1,26 @@
 // 供应商 + 模型选项，init 向导使用
 
-export const PROVIDERS = [
+export type InitProvider = {
+  value: string;
+  name: string;
+  envKey: string;
+  models: readonly { value: string; name: string }[];
+  /** 固定 baseUrl（dashscope/bigmodel 等 OpenAI 兼容服务） */
+  baseUrl?: string;
+  /** 协议类型，用于 registerProvider */
+  apiType?: "openai-completions" | "anthropic-messages";
+  /** 需要向导额外提示用户输入 baseUrl */
+  isCustom?: true;
+};
+
+export type ProviderValue = string;
+
+export const PROVIDERS: InitProvider[] =[
   {
     value: "minimax-cn",
-    name: "MiniMax 国内版 (minimaxi.com，推荐国内用户)",
+    name: "MiniMax 国内版 (推荐国内用户)",
     envKey: "MINIMAX_CN_API_KEY",
-    models: [
+    models:[
       { value: "minimax-cn:MiniMax-M2.5", name: "MiniMax-M2.5" },
       { value: "minimax-cn:MiniMax-M2.1", name: "MiniMax-M2.1" },
     ],
@@ -14,27 +29,73 @@ export const PROVIDERS = [
     value: "minimax",
     name: "MiniMax 国际版",
     envKey: "MINIMAX_API_KEY",
-    models: [
+    models:[
       { value: "minimax:MiniMax-M2.5", name: "MiniMax-M2.5" },
-      { value: "minimax:MiniMax-M2.1", name: "MiniMax-M2.1" },
+    ],
+  },
+  {
+    value: "deepseek",
+    name: "DeepSeek 官方 (deepseek.com)",
+    envKey: "DEEPSEEK_API_KEY",
+    baseUrl: "https://api.deepseek.com/v1",
+    apiType: "openai-completions",
+    models: [
+      { value: "deepseek:deepseek-chat", name: "DeepSeek Chat (V3)" },
+      { value: "deepseek:deepseek-reasoner", name: "DeepSeek Reasoner (R1)" },
+    ],
+  },
+  {
+    value: "kimi",
+    name: "Kimi (Moonshot AI，国内直连)",
+    envKey: "MOONSHOT_API_KEY",
+    baseUrl: "https://api.moonshot.cn/v1",
+    apiType: "openai-completions",
+    models:[
+      { value: "kimi:kimi-k2.5", name: "Kimi K2.5 (Agent Swarm / 视觉与代码)" },
+      { value: "kimi:kimi-k2-thinking", name: "Kimi K2 Thinking (深度推理增强)" },
+    ],
+  },
+  {
+    value: "bigmodel",
+    name: "智谱 bigmodel.cn (GLM 系列)",
+    envKey: "ZHIPU_API_KEY",
+    baseUrl: "https://open.bigmodel.cn/api/paas/v4",
+    apiType: "openai-completions",
+    models:[
+      { value: "bigmodel:glm-5", name: "GLM-5 (744B MoE 旗舰)" },
+      { value: "bigmodel:glm-4.6", name: "GLM-4.6" },
+    ],
+  },
+  {
+    value: "dashscope",
+    name: "阿里云 DashScope",
+    envKey: "DASHSCOPE_API_KEY",
+    baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    apiType: "openai-completions",
+    models:[
+      { value: "dashscope:qwen3.5-plus", name: "Qwen 3.5 Plus" },
+      { value: "dashscope:qwen3-max-thinking", name: "Qwen 3 Max Thinking (适合复杂 Agent)" },
+      { value: "dashscope:qwen3.5-medium", name: "Qwen 3.5 Medium (极速高性价比)" },
     ],
   },
   {
     value: "openai",
     name: "OpenAI",
     envKey: "OPENAI_API_KEY",
-    models: [
-      { value: "openai:gpt-4o", name: "GPT-4o" },
-      { value: "openai:gpt-4o-mini", name: "GPT-4o-mini" },
-      { value: "openai:o1-mini", name: "o1-mini" },
+    models:[
+      { value: "openai:gpt-5.4", name: "GPT-5.4 (1M Context / 强 Agent)" },
+      { value: "openai:gpt-5.4-thinking", name: "GPT-5.4 Thinking (自带思维链)" },
+      { value: "openai:gpt-5.3-codex", name: "GPT-5.3 Codex (代码作业优选)" },
+      { value: "openai:gpt-4o", name: "GPT-4o (常规备用)" },
     ],
   },
   {
     value: "anthropic",
     name: "Anthropic Claude",
     envKey: "ANTHROPIC_API_KEY",
-    models: [
-      { value: "anthropic:claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet" },
+    models:[
+      { value: "anthropic:claude-opus-4.6", name: "Claude Opus 4.6 (长线 Agent 规划王牌)" },
+      { value: "anthropic:claude-3-7-sonnet-20250224", name: "Claude 3.7 Sonnet (混合推理/代码强)" },
       { value: "anthropic:claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku" },
     ],
   },
@@ -42,37 +103,53 @@ export const PROVIDERS = [
     value: "google",
     name: "Google Gemini",
     envKey: "GEMINI_API_KEY",
-    models: [
-      { value: "google:gemini-2.0-flash", name: "Gemini 2.0 Flash" },
-      { value: "google:gemini-1.5-pro", name: "Gemini 1.5 Pro" },
-    ],
-  },
-  {
-    value: "groq",
-    name: "Groq (免费额度，速度快)",
-    envKey: "GROQ_API_KEY",
-    models: [
-      { value: "groq:llama-3.3-70b-versatile", name: "Llama 3.3 70B" },
-      { value: "groq:llama-3.1-8b-instant", name: "Llama 3.1 8B" },
+    models:[
+      { value: "google:gemini-3.1-pro", name: "Gemini 3.1 Pro (复杂逻辑与多模态)" },
+      { value: "google:gemini-3.1-flash-lite", name: "Gemini 3.1 Flash-Lite (毫秒级响应)" },
+      { value: "google:gemini-2.5-pro", name: "Gemini 2.5 Pro" },
     ],
   },
   {
     value: "openrouter",
-    name: "OpenRouter (聚合 DeepSeek、Hunter、Healer 等)",
+    name: "OpenRouter (全球聚合通道)",
     envKey: "OPENROUTER_API_KEY",
-    models: [
-      { value: "openrouter:openrouter/hunter-alpha", name: "Hunter Alpha (推荐，Agent 专用)" },
-      { value: "openrouter:openrouter/healer-alpha", name: "Healer Alpha (推荐，多模态)" },
-      { value: "openrouter:deepseek/deepseek-r1", name: "DeepSeek R1" },
-      { value: "openrouter:deepseek/deepseek-chat", name: "DeepSeek Chat" },
+    models:[
+      { value: "openrouter:deepseek/deepseek-v4", name: "DeepSeek V4" },
+      { value: "openrouter:deepseek/deepseek-r1-0528", name: "DeepSeek R1-0528 (强化推理版)" },
+      { value: "openrouter:anthropic/claude-3.7-sonnet", name: "Claude 3.7 Sonnet" },
+      { value: "openrouter:zhipu/glm-5", name: "Zhipu GLM-5" },
+      { value: "openrouter:openrouter/auto", name: "OpenRouter Auto (自动路由)" },
+    ],
+  },
+  {
+    value: "groq",
+    name: "Groq (免费额度，极速推理芯片)",
+    envKey: "GROQ_API_KEY",
+    models:[
+      { value: "groq:llama-3.3-70b-versatile", name: "Llama 3.3 70B" },
+      { value: "groq:deepseek-r1-distill-llama-70b", name: "DeepSeek R1 Llama 70B" },
     ],
   },
   {
     value: "xai",
     name: "xAI Grok",
     envKey: "XAI_API_KEY",
-    models: [{ value: "xai:grok-2-latest", name: "Grok 2" }],
+    models:[{ value: "xai:grok-latest", name: "Grok Latest" }],
   },
-] as const;
-
-export type ProviderValue = (typeof PROVIDERS)[number]["value"];
+  {
+    value: "custom-openai",
+    name: "自定义 OpenAI 兼容接口（任意 baseUrl）",
+    envKey: "CUSTOM_OPENAI_API_KEY",
+    apiType: "openai-completions",
+    isCustom: true,
+    models:[],
+  },
+  {
+    value: "custom-anthropic",
+    name: "自定义 Anthropic 兼容接口（任意 baseUrl）",
+    envKey: "CUSTOM_ANTHROPIC_API_KEY",
+    apiType: "anthropic-messages",
+    isCustom: true,
+    models:[],
+  },
+];

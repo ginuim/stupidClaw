@@ -22,11 +22,15 @@ StupidClaw 默认依赖两个外部服务：**Telegram**（作为主要交互界
 
 StupidClaw 支持多种模型供应商，你只需要至少配置一个即可启动：
 
-- **MiniMax（默认推荐）**: 对中文支持极佳。在 [MiniMax 开放平台](https://platform.minimaxi.com/) 获取 `MINIMAX_API_KEY`。
+- **DeepSeek**: 国内直连，性价比极高。在 [DeepSeek 开放平台](https://platform.deepseek.com/) 获取 `DEEPSEEK_API_KEY`。
+- **Kimi（Moonshot AI）**: 国内直连，长上下文出色。在 [Moonshot 开放平台](https://platform.moonshot.cn/) 获取 `MOONSHOT_API_KEY`。
+- **阿里云 DashScope（Qwen）**: 国内直连，Qwen 系列。在 [阿里云百炼](https://bailian.console.aliyun.com/) 获取 `DASHSCOPE_API_KEY`。
+- **智谱 bigmodel.cn（GLM）**: 国内直连，GLM 系列，有免费额度。在 [智谱开放平台](https://open.bigmodel.cn/) 获取 `ZHIPU_API_KEY`。
+- **MiniMax**: 对中文支持极佳。在 [MiniMax 开放平台](https://platform.minimaxi.com/) 获取 `MINIMAX_CN_API_KEY`。
 - **OpenAI**: 在 [OpenAI Platform](https://platform.openai.com/) 获取 `OPENAI_API_KEY`。
 - **Anthropic**: 在 [Anthropic Console](https://console.anthropic.com/) 获取 `ANTHROPIC_API_KEY`。
 - **Groq**: 速度极快，有免费额度。在 [Groq Console](https://console.groq.com/) 获取 `GROQ_API_KEY`。
-- **OpenRouter**: 一个 Key 接入几乎所有模型（含 DeepSeek）。在 [OpenRouter](https://openrouter.ai/) 获取 `OPENROUTER_API_KEY`。
+- **OpenRouter**: 一个 Key 接入几乎所有模型。在 [OpenRouter](https://openrouter.ai/) 获取 `OPENROUTER_API_KEY`。
 - **本地模型**: 支持 Ollama、LM Studio、vLLM 等本地部署，需要额外配置。
 
 完整的供应商列表和本地模型配置方法，见 [模型配置指南](models.md)。

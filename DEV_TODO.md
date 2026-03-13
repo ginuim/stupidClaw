@@ -139,6 +139,8 @@
 - [x] 验收：支持 MiniMax、OpenAI、Groq 等模型切换
 - [x] 修复：`OPENROUTER_API_KEY` 显式映射到 `openrouter` provider，避免错误回退到 `minimax-cn`
 - [x] 优化：重写 API Key 缺失报错，优先按 `STUPID_MODEL` 给出可操作提示（避免误导为 minimax-cn）
+- [x] 修复：`session.prompt` 阶段也统一重写 API Key 缺失错误，确保 StupidIM 日志提示一致
+- [x] 修复：显式配置 `STUPID_MODEL=provider:model` 时禁止静默回退，改为直接报 provider/model 可用性错误
 - [x] 新增 `ensureWorkspaceDirs()`：启动时统一创建所有 `.stupidClaw` 子目录
 - [ ] 撰写第 9 期教程文章
 
@@ -159,4 +161,22 @@
 - [x] init 向导：先配置 LLM 供应商与模型，后配 Telegram（可留空，仅用 StupidIM）
 - [x] init 向导：API Key 脱敏输入时提示用户「输入不显示属正常」
 - [x] init 向导：按供应商提供多模型选项（Hunter Alpha、Healer Alpha 等）
+- [x] init 向导改造：先输入 API Key 再选模型，OpenRouter 基于 Key 拉取可用模型并优先展示国产 Agent 推荐
+- [x] 修复：init 的 OpenRouter 模型列表改为基于 `ModelRegistry` 可用模型过滤（与运行时一致），并将文案改为“国产高性价比”
+- [x] 增强：init 在输入 API Key 后先做在线校验，失败时提示重试或允许用户确认继续
+- [x] 修复：API Key 校验改为真实最小模型请求（probe prompt），不再仅依赖 `/models` 或静态可用模型判断
+- [x] 修复：API Key 校验改为原始 HTTP 探活（OpenAI/Anthropic 兼容请求），避免 Agent 会话层误判
+- [x] 重构：API Key 校验改为按 provider 调官方免费端点（/models or /auth/key），彻底去掉通用探活猜测逻辑
+- [x] OpenRouter 校验时同步拉取可用模型列表，直接用于模型选择，一次网络请求两用
+- [x] chooseModelByProvider 接收 preloadedModelIds，OpenRouter 模型选择完全基于 Key 实际可用范围过滤
+- [x] 修复：OpenRouter 探活端点从 /models 改为 /auth/key（Key 专用验证端点），再单独拉 /models
+- [x] 修复：minimax-cn 探活改为 POST /text/chatcompletion_v2（最小 token 请求），不再依赖 GET /models
+- [x] 去掉 init 向导的 API Key 在线探活（probeKey），validateProviderApiKey 仅保留空值检查
+- [x] 新增 DashScope（阿里云）、bigmodel.cn（智谱）provider 支持，通过 registerProvider 注册
+- [x] 新增 custom-openai / custom-anthropic：init 向导支持输入任意 baseUrl，engine 动态注册
+- [x] 新增 Kimi（Moonshot AI）provider 支持，OpenAI 兼容，MOONSHOT_API_KEY
+- [x] 新增 DeepSeek 官方 provider 支持，OpenAI 兼容，DEEPSEEK_API_KEY
+- [x] 同步更新 models.md / getting-started.md / troubleshooting.md，反映新增 provider 和 init 向导自定义接口
+- [x] 重写 AGENTS.md：合并使用说明（安装、配置、目录结构）与开发约定，供访问仓库的 LLM 快速上手
+- [x] 更新 .env.example：补充所有新增 provider 的注释，默认示例改为 deepseek
 - [ ] 验收：在空目录下执行 `npx stupid-claw init` 能逐步引导用户完成 .env 配置
