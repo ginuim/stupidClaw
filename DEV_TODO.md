@@ -193,8 +193,12 @@
 - [x] `.env.example` 新增 `BRAVE_SEARCH_API_KEY` 注释说明
 - [x] 新增 `src/skills/web/get_weather.ts`：调用 wttr.in 免费接口，无需 API Key，支持中文城市名
 - [x] 在 `src/skills/registry.ts` 注册 `get_weather` skill（on_demand 暴露）
+- [x] 接入 agent-reach：新增 `builtin-skills/web_reach/SKILL.md`，随 npm 包分发，零代码让 AI 通过 bash 工具访问 Twitter、YouTube、B站、小红书、微信文章等 13+ 平台
+- [x] 重构 `file-skills.ts`：新增 `BUILTIN_SKILLS_DIR`（`builtin-skills/`），用 `import.meta.url` 定位包内路径，与用户自定义 `.stupidClaw/skills/` 并列加载，用户技能优先（seen Set 去重）
+- [x] `package.json` files 字段加入 `builtin-skills`，确保 npm 打包时内置 skill 随包发布
 - [ ] 验收：配置 Key 后 Agent 能根据用户搜索请求主动调用并返回结果
 - [ ] 验收：询问天气时 Agent 能正确调用并返回中文城市天气
+- [ ] 验收：Agent 能通过 bash 工具调 xreach/yt-dlp/mcporter 等联网命令
 
 ---
 

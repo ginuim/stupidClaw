@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 import {
   formatSkillsForPrompt,
   loadSkillsFromDir,
@@ -7,10 +8,18 @@ import {
 import { resolveSafePath } from "../memory/workspace-path.js";
 import type { SkillMeta } from "./contracts.js";
 
+const BUILTIN_SKILLS_DIR = fileURLToPath(
+  new URL("../../builtin-skills", import.meta.url)
+);
+
 const PROJECT_SKILL_DIRS = [
   {
     dir: resolveSafePath("skills"),
     source: "project:.stupidClaw/skills"
+  },
+  {
+    dir: BUILTIN_SKILLS_DIR,
+    source: "builtin"
   }
 ];
 
@@ -19,7 +28,7 @@ export function loadStandardFileSkills(): Skill[] {
   const seen = new Set<string>();
 
   for (const item of PROJECT_SKILL_DIRS) {
-    if (!fs.existsSync(item.dir)) {
+    if (!fs.existsSync(item.dir) || !fs.statSync(item.dir).isDirectory()) {
       continue;
     }
     const result = loadSkillsFromDir({
