@@ -6,6 +6,8 @@ import { createUpdateProfileSkill } from "./memory/update_profile.js";
 import { createGetSystemTimeSkill } from "./system/get_system_time.js";
 import { createListAvailableSkillsSkill } from "./system/list_available_skills.js";
 import { createSkillCreatorSkill } from "./system/skill_creator.js";
+import { createGetWeatherSkill } from "./web/get_weather.js";
+import { createWebSearchSkill } from "./web/web_search.js";
 
 export interface SkillRegistry {
   all: SkillDefinition[];
@@ -29,7 +31,9 @@ export function createSkillRegistry(options: SkillRegistryOptions = {}): SkillRe
     queryHistory,
     updateProfile,
     skillCreator,
-    manageCronJobs
+    manageCronJobs,
+    createWebSearchSkill(),
+    createGetWeatherSkill()
   ];
   const listAvailable = createListAvailableSkillsSkill(() => {
     const builtIn = baseSkills.map((skill) => ({

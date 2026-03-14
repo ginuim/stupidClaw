@@ -2,7 +2,7 @@
 
 每次修改或开发代码后需更新本文件，勾选已完成项。
 
-当前开发分支：`phase-9-flexible-model`
+当前开发分支：`phase-12-proactive-chat`
 
 ## 全局硬约束（必须满足）
 
@@ -105,13 +105,13 @@
 - [x] README.md（5 分钟启动）
 - [x] .env.example
 - [x] Telegram 消息发送优化：markdown→HTML 渲染、typing indicator、超长消息切片
-- [x] `docs/troubleshooting.md` 常见故障排查文档
-- [x] `docs/getting-started.md` 快速上手指南
+- [x] `public/troubleshooting.md` 常见故障排查文档
+- [x] `public/getting-started.md` 快速上手指南
 - [x] 第 7 期教程文章：`StupidClaw-第7期-发布与工程收口.md`
 - [x] 优化：identity + file_skills 移入 system prompt，每轮 prompt 只传 runtime_context + profile + user_message
 - [x] 修复：剥除回复中的 <think>...</think> 标签
 - [x] 修复：typing indicator 持续刷新（每 4 秒），直到回复完成
-- [x] 新增：制作并发布 `docs/index.html` 项目介绍 Landing Page，集成文档中心入口
+- [x] 新增：制作并发布 `public/index.html` 项目介绍 Landing Page，集成文档中心入口
 - [ ] 验收：新读者 clone 到跑通不超过 15 分钟
 
 ---
@@ -134,8 +134,8 @@
 - [x] 重构 `src/engine.ts`：从 `pickMiniMaxModel` 到更通用的 `pickModel`
 - [x] 支持 `STUPID_MODEL=provider:model_id` 格式配置
 - [x] 更新 `.env.example`：列出所有内置 provider，注释说明本地模型配置方式
-- [x] 新增 `docs/models.md`：完整模型配置指南，含供应商列表、本地模型、OpenAI/Anthropic 兼容配置
-- [x] 更新 `docs/getting-started.md`：简化模型配置说明，指向 models.md
+- [x] 新增 `public/models.md`：完整模型配置指南，含供应商列表、本地模型、OpenAI/Anthropic 兼容配置
+- [x] 更新 `public/getting-started.md`：简化模型配置说明，指向 models.md
 - [x] 验收：支持 MiniMax、OpenAI、Groq 等模型切换
 - [x] 修复：`OPENROUTER_API_KEY` 显式映射到 `openrouter` provider，避免错误回退到 `minimax-cn`
 - [x] 优化：重写 API Key 缺失报错，优先按 `STUPID_MODEL` 给出可操作提示（避免误导为 minimax-cn）
@@ -185,6 +185,22 @@
 - [x] skill_creator 改造：参考 anthropic skill-creator，新增 operation read/create/update 三操作，去掉 overwrite 开关；create 时不允许覆盖，强制先 read 再 update；update 支持完整 content 替换或仅更新 description；修复 normalizeSkillName 不允许下划线（与 pi-coding-agent 验证器对齐）；升级 SKILL.md 模板（含 Steps/Examples/Notes sections）；工具 description 加入「访谈优先」指引和「description 是触发机制」说明；progressive disclosure 结构：skill 存入 skills/<name>/SKILL.md，references/ 子目录由 AI 按需创建
 
 ---
+
+## 第 11 期：Web 搜索
+
+- [x] 新增 `src/skills/web/web_search.ts`：调用 Brave Search API，返回 top N 条结果
+- [x] 在 `src/skills/registry.ts` 注册 `web_search` skill（on_demand 暴露）
+- [x] `.env.example` 新增 `BRAVE_SEARCH_API_KEY` 注释说明
+- [x] 新增 `src/skills/web/get_weather.ts`：调用 wttr.in 免费接口，无需 API Key，支持中文城市名
+- [x] 在 `src/skills/registry.ts` 注册 `get_weather` skill（on_demand 暴露）
+- [ ] 验收：配置 Key 后 Agent 能根据用户搜索请求主动调用并返回结果
+- [ ] 验收：询问天气时 Agent 能正确调用并返回中文城市天气
+
+---
+
+## 第 12 期：主动闲聊（待开发）
+
+- [ ] 主动闲聊功能开发
 
 ## Bugfix
 
