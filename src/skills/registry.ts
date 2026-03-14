@@ -1,4 +1,5 @@
 import type { SkillDefinition } from "./contracts.js";
+import { createClaudeCodeSkill } from "./coding/claude_code.js";
 import { createManageCronJobsSkill } from "./cron/manage_cron_jobs.js";
 import { getStandardFileSkillMetas } from "./file-skills.js";
 import { createQueryHistorySkill } from "./memory/query_history.js";
@@ -33,7 +34,8 @@ export function createSkillRegistry(options: SkillRegistryOptions = {}): SkillRe
     skillCreator,
     manageCronJobs,
     createWebSearchSkill(),
-    createGetWeatherSkill()
+    createGetWeatherSkill(),
+    createClaudeCodeSkill()
   ];
   const listAvailable = createListAvailableSkillsSkill(() => {
     const builtIn = baseSkills.map((skill) => ({

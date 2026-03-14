@@ -198,6 +198,13 @@
 
 ---
 
+## Claude Code 集成（临时需求）
+
+- [x] 新增 `src/skills/coding/claude_code.ts`：调用本机 `claude --print` 子进程，让 pi 能把编程任务委托给 Claude Code 执行
+- [x] 在 `src/skills/registry.ts` 注册 `claude_code` skill（on_demand 暴露）
+
+---
+
 ## 第 12 期：主动闲聊（待开发）
 
 - [ ] 主动闲聊功能开发
