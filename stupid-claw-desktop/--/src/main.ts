@@ -16,7 +16,7 @@ let currentChatId = `desktop_${Date.now()}`;
 let config: AppConfig = createDefaultConfig();
 let editingProviderId: string | null = null;
 
-const WS_TOKEN = "stupid-claw-desktop-token";
+let WS_TOKEN = "stupid-claw-desktop-token"; // 会被 start_backend 返回的 token 覆盖
 const WS_URL = "ws://localhost:8080";
 const STORAGE_KEY = "stupidclaw_config";
 
@@ -74,6 +74,15 @@ async function init() {
   try {
     const imUrl: string = await invoke("start_backend");
     console.log("StupidIM URL:", imUrl);
+
+    // 从 start_backend 返回的 URL 里解析出真实 token，覆盖硬编码值
+    try {
+      const parsedUrl = new URL(imUrl);
+      const tokenFromBackend = parsedUrl.searchParams.get("token");
+      if (tokenFromBackend) {
+        WS_TOKEN = tokenFromBackend;
+      }
+    } catch (_) {}
     
     // 显示 StupidIM 网页端连接入口
     const imLink = document.getElementById("imWebUrl") as HTMLAnchorElement;
