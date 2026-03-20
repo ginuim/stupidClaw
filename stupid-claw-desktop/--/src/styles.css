@@ -8,6 +8,8 @@
 :root {
   --primary-color: #007AFF;
   --primary-hover: #0056CC;
+  --danger-color: #ff3b30;
+  --danger-hover: #d63026;
   --bg-color: #f5f5f7;
   --chat-bg: #ffffff;
   --text-color: #1d1d1f;
@@ -346,8 +348,8 @@ body {
 .settings-panel {
   position: fixed;
   top: 0;
-  right: -360px;
-  width: 360px;
+  right: -420px;
+  width: 420px;
   height: 100vh;
   background: white;
   box-shadow: -2px 0 20px rgba(0, 0, 0, 0.1);
@@ -388,12 +390,188 @@ body {
   background: rgba(0, 0, 0, 0.05);
 }
 
-.settings-content {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
+/* 设置标签页 */
+.settings-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 20px;
 }
 
+.tab-btn {
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  color: var(--text-color);
+}
+
+.tab-btn.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+
+/* 设置内容 */
+.settings-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* 当前激活的供应商 */
+.active-provider-section {
+  margin-bottom: 24px;
+}
+
+.active-provider-section h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.active-provider-card {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  color: white;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.active-provider-card .provider-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.active-provider-card .model-name {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.active-provider-card .empty-text {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* 供应商列表 */
+.providers-section {
+  margin-bottom: 24px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.section-header h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.btn-add {
+  padding: 6px 12px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-add:hover {
+  background: var(--primary-hover);
+}
+
+.providers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.provider-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: var(--bg-color);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.provider-item:hover {
+  border-color: var(--border-color);
+}
+
+.provider-item.active {
+  border-color: var(--primary-color);
+  background: rgba(0, 122, 255, 0.05);
+}
+
+.provider-item .provider-info {
+  flex: 1;
+}
+
+.provider-item .provider-name {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.provider-item .model-name {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.provider-item .provider-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.provider-item .btn-icon {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.provider-item .btn-icon:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.provider-item .check-icon {
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+/* 设置项 */
 .setting-item {
   margin-bottom: 20px;
 }
@@ -421,6 +599,15 @@ body {
   border-color: var(--primary-color);
 }
 
+.provider-name-display {
+  padding: 10px 12px;
+  background: var(--bg-color);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* 按钮 */
 .setting-actions {
   margin-top: 24px;
 }
@@ -440,6 +627,120 @@ body {
 
 .btn-primary:hover {
   background: var(--primary-hover);
+}
+
+.btn-secondary {
+  padding: 8px 16px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-secondary:hover {
+  background: var(--border-color);
+}
+
+.btn-danger {
+  padding: 8px 16px;
+  background: var(--danger-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-danger:hover {
+  background: var(--danger-hover);
+}
+
+/* 弹窗 */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.show {
+  display: flex;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  max-height: 80vh;
+  overflow: hidden;
+  animation: modalSlideIn 0.2s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h4 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.close-modal {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.close-modal:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.modal-body {
+  padding: 20px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 8px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-color);
+}
+
+.modal-footer .spacer {
+  flex: 1;
 }
 
 /* 滚动条样式 */

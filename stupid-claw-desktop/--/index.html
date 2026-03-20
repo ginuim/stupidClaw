@@ -67,24 +67,114 @@
     <!-- 设置面板 -->
     <div class="settings-panel" id="settingsPanel">
       <div class="settings-header">
-        <h3>设置</h3>
+        <h3>⚙️ 设置</h3>
         <button class="close-settings" id="closeSettings">×</button>
       </div>
+      
+      <div class="settings-tabs">
+        <button class="tab-btn active" data-tab="models">模型</button>
+        <button class="tab-btn" data-tab="general">通用</button>
+      </div>
+
       <div class="settings-content">
-        <div class="setting-item">
-          <label>API Key</label>
-          <input type="password" id="apiKeyInput" placeholder="输入你的 API Key" />
+        <!-- 模型配置 Tab -->
+        <div class="tab-content active" id="modelsTab">
+          <!-- 当前激活的供应商 -->
+          <div class="active-provider-section">
+            <h4>当前使用</h4>
+            <div id="activeProviderDisplay" class="active-provider-card">
+              <span class="empty-text">未配置供应商</span>
+            </div>
+          </div>
+
+          <!-- 供应商列表 -->
+          <div class="providers-section">
+            <div class="section-header">
+              <h4>已配置的供应商</h4>
+              <button class="btn-add" id="addProviderBtn">+ 添加</button>
+            </div>
+            <div id="providersList" class="providers-list">
+              <!-- 动态生成 -->
+            </div>
+          </div>
         </div>
-        <div class="setting-item">
-          <label>模型选择</label>
-          <select id="modelSelect">
-            <option value="deepseek:deepseek-chat">DeepSeek Chat</option>
-            <option value="openai:gpt-4o">GPT-4o</option>
-            <option value="kimi:kimi-k2-0711-preview">Kimi K2</option>
-          </select>
+
+        <!-- 通用配置 Tab -->
+        <div class="tab-content" id="generalTab">
+          <div class="setting-item">
+            <label>服务端口</label>
+            <input type="text" id="portInput" value="8080" placeholder="8080" />
+          </div>
+          <div class="setting-item">
+            <label>StupidIM Token</label>
+            <input type="text" id="tokenInput" placeholder="访问密钥" />
+          </div>
         </div>
+
         <div class="setting-actions">
-          <button class="btn-primary" id="saveSettings">保存</button>
+          <button class="btn-primary" id="saveSettings">保存配置</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 添加供应商弹窗 -->
+    <div class="modal" id="addProviderModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4>添加供应商</h4>
+          <button class="close-modal" id="closeModal">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="setting-item">
+            <label>选择供应商</label>
+            <select id="providerSelect">
+              <option value="">请选择...</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" id="cancelAddProvider">取消</button>
+          <button class="btn-primary" id="confirmAddProvider">添加</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 编辑供应商弹窗 -->
+    <div class="modal" id="editProviderModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4>配置供应商</h4>
+          <button class="close-modal" id="closeEditModal">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="setting-item">
+            <label>供应商</label>
+            <div id="editProviderName" class="provider-name-display"></div>
+          </div>
+          <div class="setting-item" id="apiKeyItem">
+            <label>API Key</label>
+            <input type="password" id="editApiKey" placeholder="输入 API Key" />
+          </div>
+          <div class="setting-item" id="baseUrlItem" style="display: none;">
+            <label>Base URL</label>
+            <input type="text" id="editBaseUrl" placeholder="http://localhost:11434/v1" />
+          </div>
+          <div class="setting-item">
+            <label>选择模型</label>
+            <select id="editModelSelect">
+              <option value="">请选择模型...</option>
+            </select>
+          </div>
+          <div class="setting-item" id="customModelItem" style="display: none;">
+            <label>自定义模型 ID</label>
+            <input type="text" id="editCustomModel" placeholder="例如: gpt-4o, claude-3-sonnet" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-danger" id="deleteProviderBtn">删除</button>
+          <div class="spacer"></div>
+          <button class="btn-secondary" id="cancelEditProvider">取消</button>
+          <button class="btn-primary" id="confirmEditProvider">保存</button>
         </div>
       </div>
     </div>

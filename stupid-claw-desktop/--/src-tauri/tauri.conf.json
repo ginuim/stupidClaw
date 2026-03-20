@@ -19,7 +19,8 @@
         "minWidth": 600,
         "minHeight": 400,
         "center": true,
-        "decorations": true
+        "decorations": true,
+        "url": "index.html"
       }
     ],
     "security": {
@@ -39,6 +40,9 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "resources": {
+      "../dist/": "dist/"
+    }
   }
 }
