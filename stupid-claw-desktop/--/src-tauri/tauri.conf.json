@@ -5,7 +5,7 @@
   "identifier": "com.stupidclaw.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
-    "devUrl": "http://localhost:1420",
+    "devUrl": "http://localhost:1421",
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
@@ -42,7 +42,8 @@
       "icons/icon.ico"
     ],
     "resources": {
-      "../dist/": "dist/"
+      "../../../dist/": "stupidclaw_dist/",
+      "../../../.env": "stupidclaw_env"
     }
   }
 }

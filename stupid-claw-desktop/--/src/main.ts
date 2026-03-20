@@ -61,7 +61,6 @@ const customModelItem = document.getElementById("customModelItem") as HTMLDivEle
 
 // 通用配置
 const portInput = document.getElementById("portInput") as HTMLInputElement;
-const tokenInput = document.getElementById("tokenInput") as HTMLInputElement;
 
 // 初始化
 async function init() {
@@ -73,7 +72,17 @@ async function init() {
 
   // 启动后端并连接 WebSocket
   try {
-    await invoke("start_backend");
+    const imUrl: string = await invoke("start_backend");
+    console.log("StupidIM URL:", imUrl);
+    
+    // 显示 StupidIM 网页端连接入口
+    const imLink = document.getElementById("imWebUrl") as HTMLAnchorElement;
+    if (imLink) {
+      imLink.href = imUrl;
+      imLink.textContent = "打开网页 IM";
+      imLink.style.display = "inline-block";
+    }
+    
     setTimeout(connectWebSocket, 2000);
   } catch (error) {
     console.error("Failed to start backend:", error);
@@ -119,7 +128,6 @@ function initProviderSelect() {
 // 更新通用设置显示
 function updateGeneralSettings() {
   portInput.value = config.port;
-  tokenInput.value = config.stupidImToken;
 }
 
 // 渲染供应商列表
@@ -628,7 +636,6 @@ function setupEventListeners() {
   // 保存设置
   saveSettings.addEventListener("click", () => {
     config.port = portInput.value || "8080";
-    config.stupidImToken = tokenInput.value;
     saveConfig();
     settingsPanel.classList.remove("open");
     alert("配置已保存，重启应用后生效");
