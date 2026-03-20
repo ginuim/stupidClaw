@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StupidClaw - AI 助手</title>
+  </head>
+
+  <body>
+    <div class="app-container">
+      <!-- 标题栏 -->
+      <div class="titlebar" data-tauri-drag-region>
+        <div class="titlebar-left">
+          <span class="app-icon">🤖</span>
+          <span class="app-title">StupidClaw</span>
+          <span class="backend-status" id="backendStatus">
+            <span class="status-dot status-connecting"></span>
+            连接中...
+          </span>
+        </div>
+        <div class="titlebar-right">
+          <button class="titlebar-btn" id="settingsBtn" title="设置">⚙️</button>
+          <button class="titlebar-btn" id="minimizeBtn" title="最小化">−</button>
+          <button class="titlebar-btn close-btn" id="closeBtn" title="关闭">×</button>
+        </div>
+      </div>
+
+      <!-- 聊天区域 -->
+      <div class="chat-container">
+        <div class="chat-window" id="chatWindow">
+          <!-- 欢迎消息 -->
+          <div class="welcome-message">
+            <div class="welcome-icon">🤖</div>
+            <h2>你好，我是 StupidClaw</h2>
+            <p>你的 AI 编程助手。我可以帮你：</p>
+            <ul>
+              <li>💻 编写和调试代码</li>
+              <li>📁 管理项目文件</li>
+              <li>🔍 搜索和查询信息</li>
+              <li>⏰ 设置定时任务</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 输入区域 -->
+        <div class="input-area">
+          <div class="input-wrapper">
+            <textarea
+              id="messageInput"
+              placeholder="输入消息... (Shift+Enter 换行, Enter 发送)"
+              rows="1"
+            ></textarea>
+            <button class="send-btn" id="sendBtn" title="发送">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+              </svg>
+            </button>
+          </div>
+          <div class="input-hints">
+            <span>Enter 发送 · Shift+Enter 换行</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 设置面板 -->
+    <div class="settings-panel" id="settingsPanel">
+      <div class="settings-header">
+        <h3>设置</h3>
+        <button class="close-settings" id="closeSettings">×</button>
+      </div>
+      <div class="settings-content">
+        <div class="setting-item">
+          <label>API Key</label>
+          <input type="password" id="apiKeyInput" placeholder="输入你的 API Key" />
+        </div>
+        <div class="setting-item">
+          <label>模型选择</label>
+          <select id="modelSelect">
+            <option value="deepseek:deepseek-chat">DeepSeek Chat</option>
+            <option value="openai:gpt-4o">GPT-4o</option>
+            <option value="kimi:kimi-k2-0711-preview">Kimi K2</option>
+          </select>
+        </div>
+        <div class="setting-actions">
+          <button class="btn-primary" id="saveSettings">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
